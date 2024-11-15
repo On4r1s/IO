@@ -24,7 +24,10 @@
   - language(eng/pl)
 - people identification in recordings(to consider)
 
+## Idea
+
+![struct](imgs/struct.png)
+
 ## Progress atm
 
 testing stuff 
-
