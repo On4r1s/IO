@@ -5,6 +5,7 @@
 - [chrome developers](https://developer.chrome.com/docs/extensions)
 - [mdn web docs](https://developer.mozilla.org/en-US/docs/Web)
 - [chrome extension examples](https://github.com/GoogleChrome/chrome-extensions-samples?tab=readme-ov-file)
+- [mdn extension examples](https://github.com/mdn/webextensions-examples)
 
 ## Functionality TBD
 

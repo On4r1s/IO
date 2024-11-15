@@ -1,8 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Reading time",
-  "version": "1.0",
-  "description": "Add the reading time to Chrome Extension documentation articles",
+  "name": "EXT_TEST",
+  "version": "0.1",
+  "description": "Some bs atm",
+  "action": {
+    "default_popup": "html/popup.html",
+    "default_title": "Show settings"
+  },
 
   "icons": {
     "16": "images/icon-16.png",
@@ -19,5 +23,8 @@
         "https://developer.mozilla.org/en-US/docs/Web/API/*"
       ]
     }
-  ]
+  ],
+  "background": {
+    "service_worker": "service-worker.js"
+  }
 }
