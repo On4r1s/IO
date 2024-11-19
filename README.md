@@ -1,4 +1,4 @@
-# Chrome AI-powered extension for automatic notes and OCR
+# Bot for Meets, Teams and Zoom with AI-powered utilities
 
 ### Useful links:
 
@@ -24,10 +24,8 @@
   - language(eng/pl)
 - people identification in recordings(to consider)
 
-## Idea
-
-![struct](imgs/struct.png)
-
 ## Progress atm
 
-testing stuff 
+- partial audio recording
+- partial local server for communication with extension
+- partial extension
