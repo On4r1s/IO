@@ -24,7 +24,26 @@ async function recording(action) {
     return await settingsRequest
 }
 
+async function sendPicture(picture) {
+    let settingsRequest
+    let body = JSON.stringify({ image: picture })
+    console.log(body)
+    try {
+        settingsRequest = fetch("http://127.0.0.1:5000/image",{
+            method: "POST",
+            body: body
+        })
+    } catch (e) {
+        return e
+    }
+    return await settingsRequest
+}
+
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-    console.log(message + " recording")
-    console.log(await recording(message))
+    if (message === 'start' || message === 'stop') {
+        console.log(await recording(message))
+    } else {
+        console.log('image')
+        await sendPicture(message)
+    }
 })
