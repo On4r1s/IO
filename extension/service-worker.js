@@ -1,49 +1,69 @@
-let recording_status = ''
-async function recording(action) {
-    let settingsRequest
-    try {
-        settingsRequest = fetch("http://127.0.0.1:5000/recording",{
-            method: "POST",
-            headers: { 'action': action },
-        })
-    } catch (e) {
-        return e
-    }
-    console.log(await settingsRequest)
-    if (await settingsRequest.status === 200) {
-        if (action === 'start'){
-            recording_status = 'started'
-        } else if (action === 'stop'){
-            recording_status = 'stopped'
-        } else {
-            console.error(action)
-        }
-    } else {
-        console.error(await settingsRequest.status)
-    }
-    return await settingsRequest
+let recording_status = 'stop'
+
+async function waitUntil(duh) {
+    return await new Promise(resolve => {
+        const interval = setInterval(() => {
+            if (duh != null) {
+                resolve(duh)
+                clearInterval(interval)
+            }
+        }, 1000);
+    })
 }
 
-async function sendPicture(picture) {
-    let settingsRequest
-    let body = JSON.stringify({ image: picture })
-    console.log(body)
+async function recording(action) {
     try {
-        settingsRequest = fetch("http://127.0.0.1:5000/image",{
+        const request = await fetch("http://127.0.0.1:5000/recording", {
+            method: "POST",
+            headers: {'action': action},
+        })
+        if (!request.ok) {
+            console.error(`Response status: ${request.status}`)
+        } else {
+            if (action === 'start') {
+                recording_status = 'start'
+            } else if (action === 'stop') {
+                recording_status = 'stop'
+            } else {
+                console.error(`action: ${action}`)
+            }
+        }
+        return null
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+async function sendPicture(image) {
+    let body = JSON.stringify({image: image})
+    try {
+        const request = await fetch("http://127.0.0.1:5000/image", {
             method: "POST",
             body: body
         })
+        if (!request.ok) {
+            console.error(`Response status: ${request.status}`)
+        }
     } catch (e) {
-        return e
+        console.error(e)
     }
-    return await settingsRequest
 }
 
+let portFromContent
+
+function connected(p) {
+    portFromContent = p
+    portFromContent.onMessage.addListener(async (m) => {
+        await sendPicture(m.image)
+    })
+}
+
+chrome.runtime.onConnect.addListener(connected);
+
+
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-    if (message === 'start' || message === 'stop') {
-        console.log(await recording(message))
-    } else {
-        console.log('image')
-        await sendPicture(message)
+    if (recording_status !== message) {
+        await recording(message)
+        await waitUntil(portFromContent.postMessage({message: message}))
     }
 })

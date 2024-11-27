@@ -39,8 +39,6 @@ async def record_output(default_audio):
                 raise Exception("Default loopback output device not found.\n\nRun `python -m pyaudiowpatch` to check "
                                 "available devices.")
 
-    print(f"Recorded output from: ({default_audio['index']}) {default_audio['name']}")  # for monitoring, to delete
-
     file = write_to_file('../data/.temp/output.wav', default_audio)
 
     stream = stream_open(file, default_audio)
@@ -57,7 +55,6 @@ async def record_output(default_audio):
 
 
 async def record_input(default_audio):
-    print(f"Recorded input from: ({default_audio['index']}) {default_audio['name']}")  # for monitoring, to delete
 
     file = write_to_file('../data/.temp/input.wav', default_audio)
 
@@ -84,7 +81,6 @@ async def end_streams(tasks):
             val = None
     for task in tasks:
         task.cancel()
-    print(f"Recording ended after {(time.time() - time_start).__round__(2)} seconds")  # for monitoring, to delete
 
 
 async def main():

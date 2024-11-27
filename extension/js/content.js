@@ -10,30 +10,45 @@ async function waitUntil(path) {
                 resolve(elem)
                 clearInterval(interval)
             }
-        }, 100);
+        }, 1000);
     })
 }
 
-//let path = "/html/body/div[1]/div[2]/div/img"
 //works only for youtube now, path is for yt
 
+let myPort = chrome.runtime.connect({ name: "port-from-content" })
 let path = "/html/body/ytd-app/div[1]/ytd-page-manager/ytd-watch-flexy/div[5]/div[1]/div/div[1]/div[2]/div/div/ytd-player/div/div/div[1]/video"
 let canvas = document.createElement("canvas")
+let status = 'stop'
 
 
+myPort.onMessage.addListener(async (m) => {
+    if (m.message === 'start') {
+        status = 'start'
+        work()
+    } else if (m.message === 'stop') {
+        status = 'stop'
+    }
+})
 
 async function screen() {
     let video = await waitUntil(path)
-
     canvas.width = parseInt(video.style.width)
     canvas.height = parseInt(video.style.height)
     canvas
         .getContext("2d")
         .drawImage(video, 0, 0, canvas.width, canvas.height)
 
-    console.log('sent')
-
-    chrome.runtime.sendMessage(canvas.toDataURL("image/png"))
+    myPort.postMessage({ image: canvas.toDataURL("image/png") })
 }
 
-screen()
+async function work(){
+    while (status !== 'stop') {
+        await screen()
+        const interval = setInterval(async () => {
+            clearInterval(interval)
+        }, 1000)
+    }
+}
+
+work()

@@ -18,14 +18,15 @@ def recording():
     try:
         if request.headers.get('action') == 'start':
             active_pipe = util.StartRecording()
+            print('Pipe opened')
             return Response(status=200)
 
         elif request.headers.get('action') == 'stop':
-            print(util.EndRecording(active_pipe))
+            util.EndRecording(active_pipe)
             active_pipe = None
+            print('pipe closed')
             return Response(status=200)
-    except (NameError, TypeError, Exception) as e:
-        print(e)
+    except Exception:
         return Response(status=400)
 
 
@@ -38,8 +39,7 @@ def image():
         img_name = data_path + datetime.now().strftime('%Y-%m-%d %H-%M-%S') + '.png'
         img.save(img_name)
 
-    except Exception as e:
-        print(e)
+    except Exception:
         return Response(status=400)
     return Response(status=200)
 
