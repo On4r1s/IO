@@ -1,13 +1,23 @@
 import asyncio
-import time
+from datetime import datetime
+
 import pyaudiowpatch as pyaudio
 import wave
+
+
+def take_and_skip_elements(input_tuple):
+    index = 0
+    result = b''
+    while index < len(input_tuple):
+        result += (input_tuple[index:index + 4])
+        index += 8
+    return result
 
 
 def stream_open(file, default_audio):
     # do not change, pyaudio gives 4 args
     def callback(in_data, frame_count, time_info, status):
-        file.writeframes(in_data)
+        file.writeframes(take_and_skip_elements(in_data))
         return in_data, pyaudio.paContinue
 
     return p.open(format=pyaudio.paInt16,
@@ -22,7 +32,7 @@ def stream_open(file, default_audio):
 # may be need to change in the future, wave write only rewrite the whole file, cannot append
 def write_to_file(filename, default_audio):
     file = wave.open(filename, 'wb')
-    file.setnchannels(default_audio["maxInputChannels"])
+    file.setnchannels(1)
     file.setsampwidth(pyaudio.get_sample_size(pyaudio.paInt16))
     file.setframerate(int(default_audio["defaultSampleRate"]))
     return file
@@ -39,7 +49,7 @@ async def record_output(default_audio):
                 raise Exception("Default loopback output device not found.\n\nRun `python -m pyaudiowpatch` to check "
                                 "available devices.")
 
-    file = write_to_file('../data/.temp/output.wav', default_audio)
+    file = write_to_file(f'../data/.temp/output{stamp}.wav', default_audio)
 
     stream = stream_open(file, default_audio)
 
@@ -56,7 +66,7 @@ async def record_output(default_audio):
 
 async def record_input(default_audio):
 
-    file = write_to_file('../data/.temp/input.wav', default_audio)
+    file = write_to_file(f'../data/.temp/input{stamp}.wav', default_audio)
 
     stream = stream_open(file, default_audio)
 
@@ -81,6 +91,7 @@ async def end_streams(tasks):
             val = None
     for task in tasks:
         task.cancel()
+    print(stamp)
 
 
 async def main():
@@ -91,7 +102,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    time_start = time.time()  # for monitoring, to delete
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S%f")
     p = pyaudio.PyAudio()
     try:
         wasapi = p.get_host_api_info_by_type(pyaudio.paWASAPI)
