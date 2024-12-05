@@ -1,72 +1,41 @@
+const API_URL = "http://127.0.0.1:5000";
 
-document.addEventListener('DOMContentLoaded', function () {
-  var calendarEl = document.getElementById('calendar');
-  var overlay = document.getElementById('overlay');
-  var eventForm = document.getElementById('eventForm');
-  var calendar = new FullCalendar.Calendar(calendarEl, {
-    initialView: 'dayGridMonth',
-    editable: true,
-    selectable: true,
-    events: [],
+function listmeetings() {
+  fetch("http://127.0.0.1:5000/meetings")
+      .then(response => {
+          if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json(); // Parsowanie odpowiedzi do JSON
+      })
+      .then(data => {
+          console.log("Odpowiedź API:", data); // Sprawdzenie danych w konsoli
 
-    // Event click to prevent redirect
-    eventClick: function (info) {
-      info.jsEvent.preventDefault(); // Zapobiega domyślnemu zachowaniu (przekierowaniu)
-      if (confirm(`Czy chcesz usunąć spotkanie: ${info.event.title}?`)) {
-        info.event.remove();
-      }
-    },
+          const meetingsList = document.getElementById("meetingsList");
+          meetingsList.innerHTML = ""; // Czyszczenie listy, jeśli istnieją stare dane
 
-    // Day click to add event
-    dateClick: function (info) {
-      openForm(info.dateStr);
-    }
-  });
-  calendar.render();
+          data.forEach(meeting => {
+              const meetingItem = document.createElement("div");
+              meetingItem.innerHTML = `
+                  <strong>Data:</strong> ${meeting.date || "Brak danych"} <br>
+                  <strong>Godzina rozpoczęcia:</strong> ${meeting.startTime || "Brak danych"} <br>
+                  <strong>Godzina zakończenia:</strong> ${meeting.endTime || "Brak danych"} <br>
+                  <strong>Link:</strong> <a href="${meeting.link}" target="_blank">${meeting.link || "Brak linku"}</a>
+              `;
+              meetingsList.appendChild(meetingItem);
+          });
+      })
+      .catch(error => {
+          console.error("Błąd podczas pobierania danych:", error);
+      });
+}
 
-  // Open the event form
-  function openForm(date) {
-    document.getElementById('eventDate').value = date;
-    eventForm.style.display = 'block';
-    overlay.style.display = 'block';
-  }
 
-  // Close the event form
-  function closeForm() {
-    eventForm.style.display = 'none';
-    overlay.style.display = 'none';
-  }
+document.addEventListener("DOMContentLoaded", () => {
+  const button = document.getElementById("meetingsButton");
+  button.addEventListener("click", listmeetings());
+});
 
-  // Add event to calendar
-  document.getElementById('addEventButton').addEventListener('click', function () {
-    var title = document.getElementById('eventTitle').value;
-    var link = document.getElementById('eventLink').value;
-    var date = document.getElementById('eventDate').value;
-    var startTime = document.getElementById('eventStartTime').value;
-    var endTime = document.getElementById('eventEndTime').value;
-
-    if (!title) {
-      alert('Proszę podać tytuł spotkania.');
-      return;
-    }
-
-    if (!startTime || !endTime) {
-      alert('Proszę podać godzinę rozpoczęcia i zakończenia.');
-      return;
-    }
-
-    var startDateTime = `${date}T${startTime}`;
-    var endDateTime = `${date}T${endTime}`;
-
-    calendar.addEvent({
-      title: title,
-      start: startDateTime,
-      end: endDateTime,
-      url: link // Link można dalej wprowadzać, ale nie działa domyślne przekierowanie
-    });
-    closeForm();
-  });
-
-  // Close form on overlay click
-  overlay.addEventListener('click', closeForm);
+document.addEventListener("DOMContentLoaded", () => {
+  listmeetings();
 });

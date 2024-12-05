@@ -8,7 +8,6 @@ from flask import Flask, Response, jsonify, send_file
 from util import *
 import flask
 
-
 app = Flask(__name__)
 #CORS(app)
 global active_pipe
@@ -107,6 +106,29 @@ def change_settings():
     except Exception as e:
         print(e)
         return Response(status=500)
+
+
+@app.get('/meetings')
+def view_meetings():
+    try:
+        filename = "spotkania.json"
+        
+        # Jeśli plik nie istnieje, utwórz go
+        if not os.path.exists(filename):
+            with open(filename, "w") as file:
+                json.dump([], file)  # Tworzy pustą listę w pliku JSON
+            print(f"Plik '{filename}' został utworzony.")
+        
+        # Odczytaj zawartość pliku JSON
+        with open(filename, "r") as file:
+            meetings = json.load(file)
+
+        # Zwróć zawartość pliku JSON
+        return jsonify(meetings), 200
+    
+    except Exception as e:
+        print(e)
+        return Response(str(e), status=500)
 
 
 if __name__ == '__main__':
