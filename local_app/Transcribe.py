@@ -8,14 +8,18 @@ from vosk import Model, KaldiRecognizer, SetLogLevel
 SetLogLevel(-1)
 
 
-async def main(file, stamp, photos):
+async def main(file, stamp, lang, photos):
     for i in range(len(photos)):
         photos[i] = datetime.strptime(photos[i], '%Y%m%d-%H%M%S%f')
 
     # only output for now
     wf = wave.open(f"../data/.temp/{file}{stamp}.wav", "rb")
 
-    model = Model(lang="en-us")
+    if lang == "en":
+        model = Model(lang="en-us")
+    else:
+        model = Model(lang="pl")
+
     stamp = datetime.strptime(stamp, '%Y%m%d-%H%M%S%f')
 
     rec = KaldiRecognizer(model, wf.getframerate())
@@ -53,4 +57,4 @@ async def main(file, stamp, photos):
 
 
 if __name__ == "__main__":
-    asyncio.run(main(sys.argv[1], sys.argv[2], eval(sys.argv[3])))
+    asyncio.run(main(sys.argv[1], sys.argv[2], sys.argv[3], eval(sys.argv[4])))

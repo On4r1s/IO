@@ -49,7 +49,7 @@ async def record_output(default_audio):
                 raise Exception("Default loopback output device not found.\n\nRun `python -m pyaudiowpatch` to check "
                                 "available devices.")
 
-    file = write_to_file(f'../data/.temp/output{stamp}.wav', default_audio)
+    file = write_to_file(f'../data/.temp/audio/output{stamp}.wav', default_audio)
 
     stream = stream_open(file, default_audio)
 
@@ -66,7 +66,7 @@ async def record_output(default_audio):
 
 async def record_input(default_audio):
 
-    file = write_to_file(f'../data/.temp/input{stamp}.wav', default_audio)
+    file = write_to_file(f'../data/.temp/audio/input{stamp}.wav', default_audio)
 
     stream = stream_open(file, default_audio)
 
