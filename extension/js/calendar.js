@@ -1,6 +1,6 @@
 const API_URL = "http://127.0.0.1:5000";
 
-async function listmeetings() {
+async function listMeetings() {
     try {
       const response = await fetch("http://127.0.0.1:5000/meetings");
       if (!response.ok) {
@@ -44,7 +44,7 @@ async function listmeetings() {
 
 document.addEventListener("DOMContentLoaded", () => {
   const button = document.getElementById("meetingsButton");
-  button.addEventListener("click", listmeetings);
+  button.addEventListener("click", listMeetings);
 });
 
 
@@ -96,5 +96,5 @@ async function deleteMeeting(meetingId) {
 
 
 document.addEventListener("DOMContentLoaded", () => {
-  listmeetings();
+  listMeetings();
 });
