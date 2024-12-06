@@ -5,45 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kalendarz</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 0;
-        }
-        .calendar {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 20px auto;
-        }
-        input, button {
-            margin: 10px 0;
-        }
-        .meeting-list {
-            margin-top: 20px;
-        }
-        .meeting-item {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .meeting-item a {
-            color: blue;
-            text-decoration: none;
-        }
     </style>
 </head>
 <body>
     <div class="calendar">
-        <h1>Kalendarz Spotkań</h1>
-        <input type="date" id="meeting-date">
-        <input type="time" id="meeting-time">
-        <input type="text" id="meeting-link" placeholder="Wprowadź link do spotkania">
-        <button id="meetingsButton">Dodaj Spotkanie</button>
+        <h2>Dodaj spotkanie</h2>
+        <form id="addMeetingForm">
+            <label>Data: <input type="date" id="date"></label><br>
+            <label>Godzina rozpoczęcia: <input type="time" id="startTime"></label><br>
+            <label>Godzina zakończenia: <input type="time" id="endTime"></label><br>
+            <label>Link: <input type="url" id="link"></label><br>
+            <button type="submit">Dodaj</button>
+        </form>
         <div id="meetingsList"></div>
         <button id="meetingsButton">Odświerz spotkania</button>
     </div>

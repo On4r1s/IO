@@ -111,7 +111,7 @@ def change_settings():
 @app.get('/meetings')
 def view_meetings():
     try:
-        filename = "spotkania.json"
+        filename = "../data/spotkania.json"
         
         # Jeśli plik nie istnieje, utwórz go
         if not os.path.exists(filename):
@@ -129,6 +129,58 @@ def view_meetings():
     except Exception as e:
         print(e)
         return Response(str(e), status=500)
+    
+def save_meetings(meetings):
+    filename = "../data/spotkania.json"
+    with open(filename, "w") as file:
+        json.dump(meetings, file, indent=4)
+
+def load_meetings():
+    filename = "../data/spotkania.json"
+    with open(filename, "r") as file:
+        try:
+            return json.load(file)
+        except json.JSONDecodeError:
+            # Obsługa uszkodzonego pliku JSON
+            print(f"Plik {filename} jest uszkodzony. Tworzę nowy pusty plik.")
+            with open(filename, "w") as file:
+                json.dump([], file)
+            return []
+
+# Add meeting endpoint
+@app.route("/add-meeting", methods=["POST"])
+def add_meeting():
+    try:
+        if not flask.request.is_json:  # Sprawdź, czy dane są w formacie JSON
+            raise ValueError("Dane nie są w formacie JSON")
+        new_meeting = flask.request.get_json()  # Pobierz dane w formacie JSON
+        if not new_meeting:
+            raise ValueError("Brak danych w żądaniu")
+        
+        # Dodaj spotkanie do pliku
+        meetings = load_meetings()
+        meetings.append(new_meeting)
+        save_meetings(meetings)
+
+        return jsonify({"message": "Spotkanie dodane", "meetings": meetings}), 201
+    except Exception as e:
+        print(f"Błąd podczas dodawania spotkania: {e}")  # Loguj błąd
+        return jsonify({"error": str(e)}), 500
+
+
+
+# Delete meeting endpoint
+@app.route("/delete-meeting/<int:meeting_id>", methods=["DELETE"])
+def delete_meeting(meeting_id):
+    try:
+        meetings = load_meetings()
+        if 0 <= meeting_id < len(meetings):
+            deleted_meeting = meetings.pop(meeting_id)
+            save_meetings(meetings)
+            return jsonify({"message": "Spotkanie usunięte", "deleted": deleted_meeting, "meetings": meetings}), 200
+        return jsonify({"error": "Nieprawidłowy ID"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
