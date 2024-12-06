@@ -13,7 +13,7 @@ async def main(file, stamp, lang, photos):
         photos[i] = datetime.strptime(photos[i], '%Y%m%d-%H%M%S%f')
 
     # only output for now
-    wf = wave.open(f"../data/.temp/{file}{stamp}.wav", "rb")
+    wf = wave.open(f"../data/.temp/audio/{file}{stamp}.wav", "rb")
 
     if lang == "en":
         model = Model(lang="en-us")

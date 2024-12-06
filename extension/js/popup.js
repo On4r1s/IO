@@ -8,6 +8,6 @@ document.getElementById('stop_record').addEventListener('click', async () => {
 
 document.getElementById('settings_btn').addEventListener('click', async () => {
     chrome.tabs.create({
-        url: chrome.runtime.getURL('html/settings.html')
+        url: chrome.runtime.getURL('html/calendar.html')
     })
 })
