@@ -7,6 +7,8 @@ import shutil
 from flask import Flask, Response, jsonify, send_file
 from util import *
 import flask
+import re
+
 
 app = Flask(__name__)
 #CORS(app)
@@ -139,7 +141,12 @@ def load_meetings():
     filename = "../data/spotkania.json"
     with open(filename, "r") as file:
         try:
-            return json.load(file)
+            meetings = json.load(file)
+            # Dodaj brakujące ID, jeśli ich nie ma
+            for idx, meeting in enumerate(meetings):
+                if "id" not in meeting:
+                    meeting["id"] = idx + 1
+            return meetings
         except json.JSONDecodeError:
             # Obsługa uszkodzonego pliku JSON
             print(f"Plik {filename} jest uszkodzony. Tworzę nowy pusty plik.")
@@ -154,11 +161,48 @@ def add_meeting():
         if not flask.request.is_json:  # Sprawdź, czy dane są w formacie JSON
             raise ValueError("Dane nie są w formacie JSON")
         new_meeting = flask.request.get_json()  # Pobierz dane w formacie JSON
+
+                # Sprawdź, czy wszystkie wymagane pola są obecne
+        required_fields = ["date", "startTime", "endTime", "link"]
+        if not all(field in new_meeting for field in required_fields):
+            return jsonify({"error": "Brak wymaganych pól w danych"}), 400
+
+        date = new_meeting["date"]
+        start_time = new_meeting["startTime"]
+        end_time = new_meeting["endTime"]
+        link = new_meeting["link"]
+
+        # Walidacja daty
+        try:
+            meeting_date = datetime.strptime(date, "%Y-%m-%d")
+            if meeting_date.date() < datetime.today().date():
+                return jsonify({"error": "Data spotkania musi być dzisiejsza lub późniejsza"}), 400
+        except ValueError:
+            return jsonify({"error": "Niepoprawny format daty, oczekiwano YYYY-MM-DD"}), 400
+
+        # Walidacja czasu
+        try:
+            start = datetime.strptime(start_time, "%H:%M")
+            end = datetime.strptime(end_time, "%H:%M")
+            if start >= end:
+                return jsonify({"error": "Godzina rozpoczęcia musi być wcześniejsza niż godzina zakończenia"}), 400
+        except ValueError:
+            return jsonify({"error": "Niepoprawny format godziny, oczekiwano HH:MM"}), 400
+
+        # Walidacja linku
+        if not re.match(r'https?://[^\s]+', link):
+            return jsonify({"error": "Podano niepoprawny URL"}), 400
+
         if not new_meeting:
             raise ValueError("Brak danych w żądaniu")
         
         # Dodaj spotkanie do pliku
         meetings = load_meetings()
+
+        # Przypisz nowe unikalne ID
+        new_id = max([meeting["id"] for meeting in meetings], default=0) + 1
+        new_meeting["id"] = new_id
+
         meetings.append(new_meeting)
         save_meetings(meetings)
 
@@ -169,16 +213,16 @@ def add_meeting():
 
 
 
-# Delete meeting endpoint
 @app.route("/delete-meeting/<int:meeting_id>", methods=["DELETE"])
 def delete_meeting(meeting_id):
     try:
         meetings = load_meetings()
-        if 0 <= meeting_id < len(meetings):
-            deleted_meeting = meetings.pop(meeting_id)
-            save_meetings(meetings)
-            return jsonify({"message": "Spotkanie usunięte", "deleted": deleted_meeting, "meetings": meetings}), 200
-        return jsonify({"error": "Nieprawidłowy ID"}), 404
+        for meeting in meetings:
+            if meeting["id"] == meeting_id:
+                meetings.remove(meeting)
+                save_meetings(meetings)
+                return jsonify({"message": "Spotkanie usunięte", "deleted": meeting, "meetings": meetings}), 200
+        return jsonify({"error": "Nie znaleziono spotkania o podanym ID"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
