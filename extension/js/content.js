@@ -47,7 +47,7 @@ async function work(){
         await screen()
         const interval = setInterval(async () => {
             clearInterval(interval)
-        }, 1000)
+        }, 2000)
     }
 }
 

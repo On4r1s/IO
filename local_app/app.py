@@ -1,18 +1,16 @@
 from base64 import b64decode
 from io import BytesIO
-from PIL import Image
 import shutil
 
-#from flask_cors import CORS
 from flask import Flask, Response, jsonify, send_file
-from util import *
 import flask
 import re
+from util import *
 
 
 app = Flask(__name__)
-#CORS(app)
 global active_pipe
+global prev_img
 
 
 @app.post('/recording')
@@ -36,8 +34,27 @@ def recording():
 def image():
     x = flask.request
     post_json = x.get_json(force=True)
+    global prev_img
     try:
-        Image.open(BytesIO(b64decode(post_json['image'][22:]))).save(img_name())
+        img = BytesIO(b64decode(post_json['image'][22:])).read()
+        try:
+            prev_img
+        except NameError:
+            prev_img = img
+            save_image(img)
+            return Response(status=200)
+        if prev_img != img:
+            try:
+                diff = mse(prev_img, img)
+            except ValueError:
+                prev_img = img
+                save_image(img)
+                return Response(status=200)
+            if diff < 0.9:
+                prev_img = img
+            else:
+                return Response(status=200)
+            save_image(img)
 
     except Exception as e:
         print(e)

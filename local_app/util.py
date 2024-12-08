@@ -2,7 +2,12 @@ import json
 import os
 from subprocess import Popen, PIPE
 from datetime import datetime
+import io
+import cv2
+import numpy as np
+from skimage.metrics import structural_similarity as ssim
 
+from PIL import Image
 from requests import request
 
 data_path = os.path.join(os.path.dirname(__file__)[:-10], 'data\\')
@@ -10,11 +15,31 @@ settings = json.load(open('../data/settings.json'))
 photos = []
 
 
+def mse(img1: bytes, img2: bytes) -> float:
+    img1_gray = cv2.cvtColor(cv2.imdecode(np.frombuffer(img1, dtype=np.uint8), cv2.IMREAD_COLOR), cv2.COLOR_BGR2GRAY)
+    img2_gray = cv2.cvtColor(cv2.imdecode(np.frombuffer(img2, dtype=np.uint8), cv2.IMREAD_COLOR), cv2.COLOR_BGR2GRAY)
+
+    if img1_gray.shape != img2_gray.shape:
+        raise ValueError
+
+    score, _ = ssim(img1_gray, img2_gray, full=True)
+
+    return score
+
+
 def img_name():
     global photos
     name = datetime.now().strftime("%Y%m%d-%H%M%S%f")
     photos.append(name)
-    return data_path + '\\.temp\\imgs' + name + '.png'
+    return data_path + '\\.temp\\imgs\\' + name + '.png'
+
+
+def save_image(img):
+    img = Image.open(io.BytesIO(img))
+    sizes = [int(elem * int(settings['quality']) / 100) for elem in img.size]
+    img = img.resize(sizes, Image.Resampling.LANCZOS)
+    img.save(img_name())
+    return
 
 
 def start_recording():
