@@ -6,7 +6,7 @@ const langDict = {
         "error_img": "Error while sending img",
     }
 }
-//works only for youtube now
+// works only for YouTube now
 const paths = {
     'https://www.youtube.com': "/html/body/ytd-app/div[1]/ytd-page-manager/ytd-watch-flexy/div[5]/div[1]/div/div[1]/div[2]/div/div/ytd-player/div/div/div[1]/video"
 }
@@ -15,6 +15,7 @@ function getElementByXpath(path) {
     return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 }
 
+// wait until element loads
 async function waitUntil(path) {
     return await new Promise(resolve => {
         const interval = setInterval(() => {
@@ -59,13 +60,13 @@ async function sendPicture(image) {
 
                 chrome.storage.local.set({recording_text: text})
             })
-
         }
     } catch (e) {
         console.error(e)
     }
 }
 
+// getting image from element appearance on canvas
 let canvas = document.createElement("canvas")
 async function screen() {
     let video = await waitUntil(paths[trimLocation("no-path")])
@@ -83,7 +84,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'local') {
         for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
             if (key === 'recording_status' && newValue === 'start') {
-                interval = setInterval(async () => {
+                interval = setInterval(async () => { // sending image each n milliseconds
                     await screen()
                 }, 2000)
             }

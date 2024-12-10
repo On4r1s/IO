@@ -9,6 +9,7 @@ import re
 from util import *
 
 app = Flask(__name__)
+# will work without, but better to have it
 CORS(app)
 global active_pipe
 global prev_img
@@ -20,6 +21,7 @@ def recording():
     global active_pipe
     global time_start
     try:
+        # if recording is less than 1 second, delete it todo delete audio
         if time_start >= datetime.now() - timedelta(seconds=1):
             time_start = None
             delete_imgs()
@@ -37,7 +39,7 @@ def recording():
             return Response(response=stamp, status=200)
     except Exception as e:
         try:
-            end_recording(active_pipe)
+            end_recording(active_pipe)  # double start ?
             active_pipe = None
         except Exception as e:
             print(e)

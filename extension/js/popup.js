@@ -22,12 +22,14 @@ const possiblePages = ['https://www.youtube.com']
 
 let interval
 let seconds
+let dict
 
 function superTrim(link) {
     const url = new URL(link)
     return `${url.protocol}//${url.host}`
 }
 
+// changing buttons appearance and usage ability
 function startRecording(startBtn, stopBtn){
     startBtn.disabled = true
     startBtn.style.backgroundColor = 'white'
@@ -41,7 +43,21 @@ function startRecording(startBtn, stopBtn){
         seconds = Math.floor((Date.now() - result.recording_seconds) / 1000)
     })
 
-    interval = setInterval(function () {updateTimer(startBtn)}, 1000)
+    interval = setInterval(function () {updateTimer(startBtn)}, 1000) // timer
+}
+
+// same here
+function endRecording(startBtn, stopBtn) {
+    startBtn.disabled = false
+    startBtn.style.backgroundColor = '#28a745'
+    startBtn.style.color = 'white'
+
+    stopBtn.disabled = true
+    stopBtn.style.backgroundColor = 'white'
+    stopBtn.style.color = '#dc3545'
+
+    clearInterval(interval)
+    startBtn.textContent = dict['start']
 }
 
 function updateTimer(btn) {
@@ -61,8 +77,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const h1 = document.getElementById('title')
 
     let text = document.createElement('div')
-    let dict
-    let k = false
 
     chrome.storage.local.get(['recording_settings'], (result) => {
         dict = langDict[result.recording_settings.lang]
@@ -72,10 +86,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         h1.innerText = dict['title']
     })
 
-    function addText() {
+    //add text with animation
+    function addText(txt) {
+        text.innerText = txt
         textDiv.appendChild(text)
         text.classList.add('popup-text')
-        k = true
 
         text.addEventListener('animationend', (event) => {
             if (event.animationName === 'typing') {
@@ -87,10 +102,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Python off -> some error while recording -> no tab -> bad tab -> all is good = nothing happens = no text
     chrome.storage.local.get(['recording_text'], (result) => {
         if (result.recording_text !== '') {
-            if (!k) { addText() }
 
             if (String(result.recording_text) === 'default') {
-                text.innerText = dict['python']
+                if (text.innerText === '') { addText(dict['python']) }
                 text.style.textDecorationLine = 'underline'
                 text.style.cursor = 'pointer'
 
@@ -103,21 +117,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     location.reload()
                 })
             } else {
-                text.innerText = String(result.recording_text)
+                if (text.innerText === '') { addText(String(result.recording_text)) }
             }
         } else {
             chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                 if (tabs.length === 0) {
-                    if (!k) { addText() }
-                    text.innerText = dict['no_tab']
+                    if (text.innerText === '') { addText(dict['no_tab']) }
 
                     startBtn.disabled = true
                     startBtn.style.backgroundColor = 'white'
                     startBtn.style.color = '#28a745'
 
                 } else if (!possiblePages.includes(superTrim(tabs[0].url))) {
-                    if (!k) { addText() }
-                    text.innerText = dict['bad_tab']
+                    if (text.innerText === '') { addText(dict['bad_tab']) }
 
                     startBtn.disabled = true
                     startBtn.style.backgroundColor = 'white'
@@ -139,19 +151,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (key === 'recording_status' && newValue === 'start') {
                     startRecording(startBtn, stopBtn)
                 } else if (key === 'recording_status' && newValue === 'stop') {
-                    startBtn.disabled = false
-                    startBtn.style.backgroundColor = '#28a745'
-                    startBtn.style.color = 'white'
-
-                    stopBtn.disabled = true
-                    stopBtn.style.backgroundColor = 'white'
-                    stopBtn.style.color = '#dc3545'
-
-                    clearInterval(interval)
-                    startBtn.textContent = 'Start Capturing'
+                    endRecording(startBtn, stopBtn)
                 } else if (key === 'recording_text') {
-                    if (!k) { addText() }
-                    text.innerText = String(newValue)
+                    if (text.innerText === '') { addText(String(newValue)) }
                 }
             }
         }

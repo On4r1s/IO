@@ -25,19 +25,25 @@ const langDict = {
 
 let settings = null
 
+/*
+python isn't good -> bad
+python was good & python is bad -> not good
+python is good -> good
+no python -> start python
+*/
 async function getSettings() {
     try {
         const request = await fetch("http://127.0.0.1:5000/settings", {
             method: "GET"
         })
         if (!request.ok) {
-            if (settings === null) {
+            if (settings === null) { // bad
                 chrome.storage.local.set({
                     recording_status: 'stop',
                     recording_text: `Error with settings(${request.status})`,
                     recording_settings: defaultSettings,
                 })
-            } else {
+            } else { // not good
                 const dict = langDict[settings.lang]
                 const text = `${dict['error_wt']} ${dict['settings']}(${request.status})`
 
@@ -47,7 +53,7 @@ async function getSettings() {
                     recording_settings: defaultSettings,
                 })
             }
-        } else {
+        } else { // good
             settings = JSON.parse(await request.text())
             chrome.storage.local.set({
                 recording_status: 'stop',
@@ -55,16 +61,17 @@ async function getSettings() {
                 recording_settings: settings,
             })
         }
-    } catch (e) {
+    } catch (e) { // run python
         chrome.storage.local.set({
             recording_status: 'stop',
             recording_text: 'default',
             recording_settings: defaultSettings,
         })
-        console.error(e)
+        console.error('run python')
     }
 }
 
+// separated to use on background, future use for main page with status(will be in chrome.storage)
 async function analyze(stamp) {
     if (stamp !== 'nah') {
         try {
@@ -87,6 +94,7 @@ async function analyze(stamp) {
     }
 }
 
+// start or stop recording
 async function recording(action) {
     chrome.storage.local.get(['recording_page'], async (result) => {
         if (result.recording_page !== null) {
@@ -95,12 +103,12 @@ async function recording(action) {
                     method: "POST",
                     headers: {'action': action},
                 })
-                if (!request.ok) {
+                if (!request.ok) { // something went wrong
                     const dict = langDict[settings.lang]
                     const text = `${dict['error_wt']} ${dict['recording']}(${request.status})`
 
                     chrome.storage.local.set({recording_text: text})
-                } else {
+                } else { // all good
                     chrome.storage.local.set({ recording_seconds: Date.now()})
                     if (action === 'start') {
                         chrome.storage.local.set({ recording_status: 'start'})
@@ -110,11 +118,9 @@ async function recording(action) {
                         await analyze(await request.text())
                     }
                 }
-            } catch (e) {
+            } catch (e) { // ???
                 console.error(e)
             }
-        } else {
-
         }
     })
 }
