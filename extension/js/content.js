@@ -1,3 +1,16 @@
+const langDict = {
+    "pl": {
+        "error_img": "Błąd z wysłaniem obrazku",
+    },
+    "en": {
+        "error_img": "Error while sending img",
+    }
+}
+//works only for youtube now
+const paths = {
+    'https://www.youtube.com': "/html/body/ytd-app/div[1]/ytd-page-manager/ytd-watch-flexy/div[5]/div[1]/div/div[1]/div[2]/div/div/ytd-player/div/div/div[1]/video"
+}
+
 function getElementByXpath(path) {
     return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 }
@@ -14,41 +27,69 @@ async function waitUntil(path) {
     })
 }
 
-//works only for youtube now, path is for yt
+function trimLocation(mode = "basic") {
+    const currentLocation = window.location.href;
 
-let myPort = chrome.runtime.connect({ name: "port-from-content" })
-let path = "/html/body/ytd-app/div[1]/ytd-page-manager/ytd-watch-flexy/div[5]/div[1]/div/div[1]/div[2]/div/div/ytd-player/div/div/div[1]/video"
-let canvas = document.createElement("canvas")
-let status = 'stop'
+    switch (mode) {
+        case "basic": // Removes leading/trailing whitespace
+            return currentLocation.trim()
 
+        case "no-query": // Removes query parameters
+            return currentLocation.split('?')[0]
 
-myPort.onMessage.addListener(async (m) => {
-    if (m.message === 'start') {
-        status = 'start'
-        work()
-    } else if (m.message === 'stop') {
-        status = 'stop'
+        case "no-path": // Keeps only the domain (protocol and host)
+            const url = new URL(currentLocation)
+            return `${url.protocol}//${url.host}`
+
+        default:
+            return currentLocation
     }
-})
+}
 
+async function sendPicture(image) {
+    let body = JSON.stringify({image: image})
+    try {
+        const request = await fetch("http://127.0.0.1:5000/image", {
+            method: "POST",
+            body: body
+        })
+        if (!request.ok) {
+            chrome.storage.local.get(['recording_settings'], (result) => {
+                const text = `${langDict[result.recording_settings.settings.lang]['error_img']}(${request.status})`
+
+                chrome.storage.local.set({recording_text: text})
+            })
+
+        }
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+let canvas = document.createElement("canvas")
 async function screen() {
-    let video = await waitUntil(path)
+    let video = await waitUntil(paths[trimLocation("no-path")])
     canvas.width = parseInt(video.style.width)
     canvas.height = parseInt(video.style.height)
     canvas
         .getContext("2d")
         .drawImage(video, 0, 0, canvas.width, canvas.height)
 
-    myPort.postMessage({ image: canvas.toDataURL("image/png") })
+    await sendPicture(canvas.toDataURL("image/png"))
 }
 
-async function work(){
-    while (status !== 'stop') {
-        await screen()
-        const interval = setInterval(async () => {
-            clearInterval(interval)
-        }, 2000)
+let interval
+chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local') {
+        for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
+            if (key === 'recording_status' && newValue === 'start') {
+                interval = setInterval(async () => {
+                    await screen()
+                }, 2000)
+            }
+            else if (key === 'recording_status' && newValue === 'stop') {
+                clearInterval(interval)
+            }
+        }
     }
-}
-
-work()
+})

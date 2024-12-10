@@ -1,7 +1,7 @@
 import json
 import os
 from subprocess import Popen, PIPE
-from datetime import datetime
+from datetime import datetime, timedelta
 import io
 import cv2
 import numpy as np
@@ -34,6 +34,14 @@ def img_name():
     return data_path + '\\.temp\\imgs\\' + name + '.png'
 
 
+def delete_imgs():
+    global photos
+    for photo in photos:
+        os.remove(data_path + '.temp\\imgs\\' + photo)
+    photos = []
+    return
+
+
 def save_image(img):
     img = Image.open(io.BytesIO(img))
     sizes = [int(elem * int(settings['quality']) / 100) for elem in img.size]
@@ -48,8 +56,7 @@ def start_recording():
 
 
 def end_recording(pipe):
-    transcribe(str(pipe.communicate(input='F'.encode())[0])[2:-5])
-    return
+    return str(pipe.communicate(input='F'.encode())[0])[2:-5]
 
 
 def transcribe(stamp):

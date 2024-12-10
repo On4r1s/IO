@@ -7,6 +7,10 @@
     "default_popup": "html/popup.html",
     "default_title": "Show settings"
   },
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
   "host_permissions": ["*://*/*"],
   "icons": {
     "16": "images/icon-16.png",

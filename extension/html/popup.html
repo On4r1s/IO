@@ -1,13 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Audio Capture</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extension Popup</title>
+    <link rel="stylesheet" href="../css/popup.css">
 </head>
 <body>
-<h1>Teleconference Audio Capture</h1>
-<button id="start_record">Start Capturing Audio</button>
-<button id="stop_record">Stop Capturing Audio</button>
-<button id="settings_btn">Open Page</button>
+<div class="popup-container">
+    <h1 id="title"></h1>
+    <div class="button-group">
+        <button id="start-btn"></button>
+        <button id="stop-btn" disabled></button>
+        <div id="popup-text-div" style=""></div>
+        <button id="settings-btn"></button>
+    </div>
+</div>
 <script src="../js/popup.js"></script>
 </body>
 </html>

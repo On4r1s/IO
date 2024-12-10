@@ -1,30 +1,55 @@
 from base64 import b64decode
 from io import BytesIO
-import shutil
+from shutil import disk_usage
 
 from flask import Flask, Response, jsonify, send_file
 import flask
+from flask_cors import CORS
 import re
 from util import *
 
-
 app = Flask(__name__)
+CORS(app)
 global active_pipe
 global prev_img
+global time_start
 
 
 @app.post('/recording')
 def recording():
     global active_pipe
+    global time_start
+    try:
+        if time_start >= datetime.now() - timedelta(seconds=1):
+            time_start = None
+            delete_imgs()
+            return 'nah', 200
+    except (NameError, TypeError):
+        time_start = datetime.now()
     try:
         if flask.request.headers.get('action') == 'start':
             active_pipe = start_recording()
             return Response(status=200)
 
         elif flask.request.headers.get('action') == 'stop':
+            stamp = end_recording(active_pipe)
+            active_pipe = None
+            return Response(response=stamp, status=200)
+    except Exception as e:
+        try:
             end_recording(active_pipe)
             active_pipe = None
-            return Response(status=200)
+        except Exception as e:
+            print(e)
+        print(e)
+        return Response(status=400)
+
+
+@app.post('/analyze')
+def analyze():
+    try:
+        transcribe(flask.request.headers.get('stamp'))
+        return Response(status=200)
     except Exception as e:
         print(e)
         return Response(status=400)
@@ -104,7 +129,7 @@ def delete_file(file):
 @app.get('/settings')
 def send_settings():
     try:
-        send_file(str(os.path.join(data_path, "settings.json")), mimetype='application/pdf')
+        return send_file(str(os.path.join(data_path, "settings.json")), mimetype='application/pdf')
     except FileNotFoundError:
         return Response(status=404)
     except Exception as e:
@@ -114,13 +139,15 @@ def send_settings():
 
 @app.post('/settings')
 def change_settings():
-    free = shutil.disk_usage("/")[2]
+    global settings
+    free = disk_usage("/")[2]
     try:
         to_write = flask.request.get_json(force=True)
         if int(to_write['max_space']) > free:
             Response(status=400)
         with open("../data/settings.json", "w") as f:
             json.dump(to_write, f)
+            settings = to_write
         return Response(status=200)
     except Exception as e:
         print(e)
@@ -148,11 +175,13 @@ def view_meetings():
     except Exception as e:
         print(e)
         return Response(str(e), status=500)
-    
+
+
 def save_meetings(meetings):
     filename = "../data/spotkania.json"
     with open(filename, "w") as file:
         json.dump(meetings, file, indent=4)
+
 
 def load_meetings():
     filename = "../data/spotkania.json"
@@ -171,8 +200,9 @@ def load_meetings():
                 json.dump([], file)
             return []
 
+
 # Add meeting endpoint
-@app.route("/add-meeting", methods=["POST"])
+@app.post("/add-meeting")
 def add_meeting():
     try:
         if not flask.request.is_json:  # Sprawdź, czy dane są w formacie JSON
@@ -229,8 +259,7 @@ def add_meeting():
         return jsonify({"error": str(e)}), 500
 
 
-
-@app.route("/delete-meeting/<int:meeting_id>", methods=["DELETE"])
+@app.delete("/delete-meeting/<int:meeting_id>")
 def delete_meeting(meeting_id):
     try:
         meetings = load_meetings()
