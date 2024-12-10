@@ -249,7 +249,8 @@ prenexIcons.forEach(icon => {
 
         // Check if the icon is "calendar-prev"
         // or "calendar-next"
-        month = icon.id === "calendar-prev" ? month - 1 : month + 1;
+        //month = icon.id === "calendar-prev" ? month  : month ;
+        // moja ulubiona linijka kodu ever nigdy nic lepszego już nie napiszę
 
         // Check if the month is out of range
         if (month < 0 || month > 11) {
