@@ -6,6 +6,8 @@ import io
 import cv2
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
+from pdfMake import create_pdf
+import asyncio
 
 from PIL import Image
 from requests import request
@@ -77,6 +79,8 @@ def transcribe(stamp):
 
     # need to think, temporal solution
     gpt_request(transcribed_out, stamp)
+
+    asyncio.run(create_pdf(transcribed_out, data_path))
     return
 
 
