@@ -9,27 +9,33 @@
 </head>
 <body>
     <div class="container">
-        <h1>File Management</h1>
-
-        <h2>List All Files</h2>
-        <button class="view_files_button" id="view_files_button" >Get Files</button>
-        <ul id="file-list"></ul>
-
-        <h2>View File</h2>
-        <input type="text" id="view-filename" placeholder="Enter file name" />
-        <button id="viewOneFileButton">View File</button>
-        <textarea id="file-contents" readonly></textarea>
-        <div id="file-content">
-            <!-- PDF or Markdown content will be displayed here -->
-        </div>
-
-        <h2>Delete File</h2>
-        <input type="text" id="delete-filename" placeholder="Enter file name" />
-        <button class="delete_button" id="delete-button">Delete File</button>
-        <p id="delete-message"></p>
-        
+        <header>
+            <h1>File Management</h1>
+        </header>
+    
+        <section class="file-list-section">
+            <h2>List All Files</h2>
+            <button class="btn btn-primary" id="view_files_button">Get Files</button>
+            <ul id="file-list"></ul>
+        </section>
+    
+        <section class="view-file-section">
+            <h2>View File</h2>
+            <input type="text" id="view-filename" placeholder="Enter file name" aria-label="File name to view" />
+            <button class="btn btn-secondary" id="viewOneFileButton">View File</button>
+            <textarea id="file-contents" readonly placeholder="File content will appear here"></textarea>
+            <div id="file-content"></div>
+        </section>
+    
+        <section class="delete-file-section">
+            <h2>Delete File</h2>
+            <input type="text" id="delete-filename" placeholder="Enter file name" aria-label="File name to delete" />
+            <button class="btn btn-danger" id="delete-button">Delete File</button>
+            <p id="delete-message"></p>
+        </section>
     </div>
-c
+    
+
     <script src="../js/settings.js">
 
     </script>

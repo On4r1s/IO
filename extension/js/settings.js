@@ -1,16 +1,15 @@
 const API_URL = "http://127.0.0.1:5000";
 
-// List all files
+
 async function listFiles() {
+    const fileList = document.getElementById("file-list");
+    //fileList.innerHTML = `<li>Loading files...</li>`;
     try {
         const response = await fetch(`${API_URL}/files`);
         const data = await response.json();
-
-        const fileList = document.getElementById("file-list");
         fileList.innerHTML = "";
 
         if (data.notes || data.transcriptions) {
-            
             if (data.notes && data.notes.length > 0) {
                 const notesHeader = document.createElement("h3");
                 notesHeader.textContent = "Notes:";
@@ -25,7 +24,6 @@ async function listFiles() {
                 fileList.appendChild(notesList);
             }
 
-            // Sekcja dla plików z transcriptions
             if (data.transcriptions && data.transcriptions.length > 0) {
                 const transcriptionsHeader = document.createElement("h3");
                 transcriptionsHeader.textContent = "Transcriptions:";
@@ -40,14 +38,14 @@ async function listFiles() {
                 fileList.appendChild(transcriptionsList);
             }
         } else {
-            fileList.innerHTML = `<li>Error: ${data.error || "No files found"}</li>`;
+            fileList.innerHTML = `<li>No files found.</li>`;
         }
     } catch (error) {
         console.error("Error fetching files:", error);
-        const fileList = document.getElementById("file-list");
-        fileList.innerHTML = `<li>Error fetching files</li>`;
+        fileList.innerHTML = `<li>Error fetching files. Please try again later.</li>`;
     }
 }
+
 
 
 async function viewFile() {
