@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+import sys
 from os import path
 
 import pyaudiowpatch as pyaudio
@@ -76,7 +76,6 @@ async def end_streams(tasks):
             val = None
     for task in tasks:
         task.cancel()
-    print(stamp)
 
 
 async def main():
@@ -87,7 +86,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S%f")
+    stamp = sys.argv[1]
     p = pyaudio.PyAudio()
     try:
         wasapi = p.get_host_api_info_by_type(pyaudio.paWASAPI)

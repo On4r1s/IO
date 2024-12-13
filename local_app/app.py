@@ -15,6 +15,7 @@ CORS(app)
 global active_pipe
 global prev_img
 global time_start
+global active_stamp
 
 
 @app.post('/recording')
@@ -22,29 +23,37 @@ def recording():
     global active_pipe
     global time_start
     global prev_img
+    global active_stamp
     try:
         # if recording is less than 1 second, delete audio + photos(if any)
         if time_start >= datetime.datetime.now() - datetime.timedelta(seconds=1):
             time_start = None
-            delete_files(end_recording(active_pipe))
+            end_recording(active_pipe)
+            delete_files(active_stamp)
             active_pipe = None
+            active_stamp = None
             prev_img = None
             return 'nah', 200
     except (NameError, TypeError):
         time_start = datetime.datetime.now()
     try:
         if flask.request.headers.get('action') == 'start':
-            active_pipe = start_recording()
+            active_stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")
+            active_pipe = start_recording(active_stamp)
             return Response(status=200)
 
         elif flask.request.headers.get('action') == 'stop':
-            stamp = end_recording(active_pipe)
             active_pipe = None
+            stamp = active_stamp
+            active_stamp = None
             return Response(response=stamp, status=200)
     except Exception:
         try:
             end_recording(active_pipe)  # double start ?
             active_pipe = None
+            active_stamp = None
+            time_start = None
+            prev_img = None
         except Exception as e:
             print(e)
         return Response(status=400)
@@ -71,20 +80,23 @@ def image():
             prev_img == b''
         except (NameError, TypeError):
             prev_img = img
-            save_image(img)
+            try:
+                save_image(img, active_stamp)
+            except TypeError:
+                return Response(status=400)
             return Response(status=200)
         if prev_img != img:
             try:
                 diff = mse(prev_img, img)
             except ValueError:
                 prev_img = img
-                save_image(img)
+                save_image(img, active_stamp)
                 return Response(status=200)
             if diff < 0.9:
                 prev_img = img
             else:
                 return Response(status=200)
-            save_image(img)
+            save_image(img, active_stamp)
 
     except Exception as e:
         print(e)

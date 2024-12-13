@@ -12,7 +12,7 @@ from requests import request
 
 data_path = os.path.join(os.path.dirname(__file__)[:-10], 'data\\')
 settings = json.load(open(data_path + 'settings.json'))
-photos_stamps = []
+photos_stamps = {}
 
 
 def mse(img1: bytes, img2: bytes) -> float:
@@ -27,42 +27,50 @@ def mse(img1: bytes, img2: bytes) -> float:
     return score
 
 
-def img_name():
+def img_name(stamp):
     global photos_stamps
     name = datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")
-    photos_stamps.append(name)
+    try:
+        photos_stamps[stamp]
+    except KeyError:
+        photos_stamps[stamp] = []
+    photos_stamps[stamp].append(name)
     return data_path + '\\.temp\\imgs\\' + name + '.png'
 
 
 def delete_files(stamp):
     global photos_stamps
-    for photo in photos_stamps:
+    for photo in photos_stamps[stamp]:
         os.remove(data_path + '.temp\\imgs\\' + photo + '.png')
     os.remove(data_path + f'.temp\\audio\\input{stamp}.wav')
     os.remove(data_path + f'.temp\\audio\\output{stamp}.wav')
-    photos_stamps = []
+    del photos_stamps[stamp]
     return
 
 
-def save_image(img):
+def save_image(img, stamp):
     img = Image.open(io.BytesIO(img))
     sizes = [int(elem * int(settings['quality']) / 100) for elem in img.size]
     img = img.resize(sizes, Image.Resampling.LANCZOS)
-    img.save(img_name())
+    img.save(img_name(stamp))
     return
 
 
-def start_recording():
-    p = Popen("python Record.py", stdin=PIPE, stdout=PIPE, shell=True)
+def start_recording(stamp):
+    p = Popen(f"python Record.py {stamp}", stdin=PIPE, stdout=PIPE, shell=True)
     return p
 
 
 def end_recording(pipe):
-    return str(pipe.communicate(input='F'.encode())[0])[2:-5]
+    pipe.communicate(input='F'.encode())
+    return
 
 
 def transcribe(stamp):
-    to_send = str(photos_stamps).replace('"', "'").replace(" ", "")
+    try:
+        to_send = str(photos_stamps[stamp]).replace('"', "'").replace(" ", "")
+    except KeyError:
+        to_send = []
 
     p_out = Popen(f"python Transcribe.py output {stamp} {settings['lang']} {to_send}",
                   stdin=PIPE, stdout=PIPE, shell=True)
