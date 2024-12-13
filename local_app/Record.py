@@ -1,8 +1,11 @@
 import asyncio
 from datetime import datetime
+from os import path
 
 import pyaudiowpatch as pyaudio
 import wave
+
+data_path = path.join(path.dirname(__file__)[:-10], 'data\\')
 
 
 def take_and_skip_elements(input_tuple):
@@ -38,35 +41,17 @@ def write_to_file(filename, default_audio):
     return file
 
 
-async def record_output(default_audio):
-    # bad method, another solution not found, but it just works(bethesda moment)
-    if not default_audio["isLoopbackDevice"]:
-        for loopback in p.get_loopback_device_info_generator():
-            if default_audio["name"] in loopback["name"]:
-                default_audio = loopback
-                break
-            else:
-                raise Exception("Default loopback output device not found.\n\nRun `python -m pyaudiowpatch` to check "
-                                "available devices.")
+async def record(default_audio, flow):
 
-    file = write_to_file(f'../data/.temp/audio/output{stamp}.wav', default_audio)
+    if flow == 'output':
+        # bad method, another solution not found, but it just works(bethesda moment)
+        if not default_audio["isLoopbackDevice"]:
+            for loopback in p.get_loopback_device_info_generator():
+                if default_audio["name"] in loopback["name"]:
+                    default_audio = loopback
+                    break
 
-    stream = stream_open(file, default_audio)
-
-    try:
-
-        while True:
-            await asyncio.sleep(1)
-
-    except asyncio.CancelledError:  # end recording
-        stream.stop_stream()
-        stream.close()
-        file.close()
-
-
-async def record_input(default_audio):
-
-    file = write_to_file(f'../data/.temp/audio/input{stamp}.wav', default_audio)
+    file = write_to_file(f'{data_path}.temp/audio/{flow}{stamp}.wav', default_audio)
 
     stream = stream_open(file, default_audio)
 
@@ -96,8 +81,8 @@ async def end_streams(tasks):
 
 async def main():
     async with asyncio.TaskGroup() as tg:
-        task1 = tg.create_task(record_output(p.get_device_info_by_index(wasapi['defaultOutputDevice'])))
-        task2 = tg.create_task(record_input(p.get_device_info_by_index(wasapi['defaultInputDevice'])))
+        task1 = tg.create_task(record(p.get_device_info_by_index(wasapi['defaultOutputDevice']), 'output'))
+        task2 = tg.create_task(record(p.get_device_info_by_index(wasapi['defaultInputDevice']), 'input'))
         tg.create_task(end_streams([task1, task2]))
 
 

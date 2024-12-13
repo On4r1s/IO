@@ -1,5 +1,6 @@
 from base64 import b64decode
 from io import BytesIO
+from pathlib import Path
 from shutil import disk_usage
 
 from flask import Flask, Response, jsonify, send_file
@@ -20,14 +21,17 @@ global time_start
 def recording():
     global active_pipe
     global time_start
+    global prev_img
     try:
-        # if recording is less than 1 second, delete it todo delete audio
-        if time_start >= datetime.now() - timedelta(seconds=1):
+        # if recording is less than 1 second, delete audio + photos(if any)
+        if time_start >= datetime.datetime.now() - datetime.timedelta(seconds=1):
             time_start = None
-            delete_imgs()
+            delete_files(end_recording(active_pipe))
+            active_pipe = None
+            prev_img = None
             return 'nah', 200
     except (NameError, TypeError):
-        time_start = datetime.now()
+        time_start = datetime.datetime.now()
     try:
         if flask.request.headers.get('action') == 'start':
             active_pipe = start_recording()
@@ -37,13 +41,12 @@ def recording():
             stamp = end_recording(active_pipe)
             active_pipe = None
             return Response(response=stamp, status=200)
-    except Exception as e:
+    except Exception:
         try:
             end_recording(active_pipe)  # double start ?
             active_pipe = None
         except Exception as e:
             print(e)
-        print(e)
         return Response(status=400)
 
 
@@ -65,8 +68,8 @@ def image():
     try:
         img = BytesIO(b64decode(post_json['image'][22:])).read()
         try:
-            prev_img
-        except NameError:
+            prev_img == b''
+        except (NameError, TypeError):
             prev_img = img
             save_image(img)
             return Response(status=200)
@@ -89,6 +92,13 @@ def image():
     return Response(status=200)
 
 
+# to have info about used space, and other stuff
+@app.get('/health')
+def health():
+    used = sum(f.stat().st_size for f in Path(data_path).glob('**/*') if f.is_file()) / 1073741824
+    return {"left": str(int(settings['max_space']) - used.__round__(6))}, 200
+
+
 @app.get('/files')
 def get_files():
     try:
@@ -101,12 +111,12 @@ def get_files():
 @app.get('/files/<file>')
 def show_file(file):
     if file.lower().endswith('.pdf'):
-        file_path = os.path.join(data_path, '\\transcriptions\\'+file)
+        file_path = os.path.join(data_path, '\\transcriptions\\' + file)
         if not os.path.isfile(file_path):
             return Response(status=404)
         return send_file(str(file_path), mimetype='application/pdf')
     else:
-        file_path = os.path.join(data_path, '\\notes\\'+file)
+        file_path = os.path.join(data_path, '\\notes\\' + file)
         if not os.path.isfile(file_path):
             return Response(status=404)
         return send_file(str(file_path))
@@ -142,12 +152,13 @@ def send_settings():
 @app.post('/settings')
 def change_settings():
     global settings
-    free = disk_usage("/")[2]
+    free = disk_usage("/")[2] / 1073741824
+    used = sum(f.stat().st_size for f in Path(data_path).glob('**/*') if f.is_file()) / 1073741824
     try:
         to_write = flask.request.get_json(force=True)
-        if int(to_write['max_space']) > free:
+        if used >= int(to_write['max_space']) >= free:
             Response(status=400)
-        with open("../data/settings.json", "w") as f:
+        with open(data_path + "settings.json", "w") as f:
             json.dump(to_write, f)
             settings = to_write
         return Response(status=200)
@@ -159,34 +170,34 @@ def change_settings():
 @app.get('/meetings')
 def view_meetings():
     try:
-        filename = "../data/spotkania.json"
-        
+        filename = data_path + "spotkania.json"
+
         # Jeśli plik nie istnieje, utwórz go
         if not os.path.exists(filename):
             with open(filename, "w") as file:
                 json.dump([], file)  # Tworzy pustą listę w pliku JSON
             print(f"Plik '{filename}' został utworzony.")
-        
+
         # Odczytaj zawartość pliku JSON
         with open(filename, "r") as file:
             meetings = json.load(file)
 
         # Zwróć zawartość pliku JSON
         return jsonify(meetings), 200
-    
+
     except Exception as e:
         print(e)
         return Response(str(e), status=500)
 
 
 def save_meetings(meetings):
-    filename = "../data/spotkania.json"
+    filename = data_path + "spotkania.json"
     with open(filename, "w") as file:
         json.dump(meetings, file, indent=4)
 
 
 def load_meetings():
-    filename = "../data/spotkania.json"
+    filename = data_path + "spotkania.json"
     with open(filename, "r") as file:
         try:
             meetings = json.load(file)
@@ -198,8 +209,8 @@ def load_meetings():
         except json.JSONDecodeError:
             # Obsługa uszkodzonego pliku JSON
             print(f"Plik {filename} jest uszkodzony. Tworzę nowy pusty plik.")
-            with open(filename, "w") as file:
-                json.dump([], file)
+            with open(filename, "w") as f:
+                json.dump([], f)
             return []
 
 
@@ -211,7 +222,7 @@ def add_meeting():
             raise ValueError("Dane nie są w formacie JSON")
         new_meeting = flask.request.get_json()  # Pobierz dane w formacie JSON
 
-                # Sprawdź, czy wszystkie wymagane pola są obecne
+        # Sprawdź, czy wszystkie wymagane pola są obecne
         required_fields = ["date", "startTime", "endTime", "link"]
         if not all(field in new_meeting for field in required_fields):
             return jsonify({"error": "Brak wymaganych pól w danych"}), 400
@@ -223,16 +234,16 @@ def add_meeting():
 
         # Walidacja daty
         try:
-            meeting_date = datetime.strptime(date, "%Y-%m-%d")
-            if meeting_date.date() < datetime.today().date():
+            meeting_date = datetime.datetime.strptime(date, "%Y-%m-%d")
+            if meeting_date.date() < datetime.datetime.today().date():
                 return jsonify({"error": "Data spotkania musi być dzisiejsza lub późniejsza"}), 400
         except ValueError:
             return jsonify({"error": "Niepoprawny format daty, oczekiwano YYYY-MM-DD"}), 400
 
         # Walidacja czasu
         try:
-            start = datetime.strptime(start_time, "%H:%M")
-            end = datetime.strptime(end_time, "%H:%M")
+            start = datetime.datetime.strptime(start_time, "%H:%M")
+            end = datetime.datetime.strptime(end_time, "%H:%M")
             if start >= end:
                 return jsonify({"error": "Godzina rozpoczęcia musi być wcześniejsza niż godzina zakończenia"}), 400
         except ValueError:
@@ -244,7 +255,7 @@ def add_meeting():
 
         if not new_meeting:
             raise ValueError("Brak danych w żądaniu")
-        
+
         # Dodaj spotkanie do pliku
         meetings = load_meetings()
 

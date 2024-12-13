@@ -1,19 +1,20 @@
 import asyncio
 import math
+from os import path
 import sys
 import wave
 from datetime import datetime
 from vosk import Model, KaldiRecognizer, SetLogLevel
 
 SetLogLevel(-1)
+data_path = path.join(path.dirname(__file__)[:-10], 'data\\')
 
 
 async def main(file, stamp, lang, photos):
     for i in range(len(photos)):
         photos[i] = datetime.strptime(photos[i], '%Y%m%d-%H%M%S%f')
 
-    # only output for now
-    wf = wave.open(f"../data/.temp/audio/{file}{stamp}.wav", "rb")
+    wf = wave.open(f"{data_path}.temp\\audio\\{file}{stamp}.wav", "rb")
 
     if lang == "en":
         model = Model(lang="en-us")

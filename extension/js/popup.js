@@ -87,8 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     })
 
     //add text with animation
-    function addText(txt) {
-        text.innerText = txt
+    function addText() {
         textDiv.appendChild(text)
         text.classList.add('popup-text')
 
@@ -103,8 +102,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.storage.local.get(['recording_text'], (result) => {
         if (result.recording_text !== '') {
 
-            if (String(result.recording_text) === 'default') {
-                if (text.innerText === '') { addText(dict['python']) }
+            if (result.recording_text === 'default') {
+                if (text.innerText === '') { addText() }
+                text.innerText = dict['python']
                 text.style.textDecorationLine = 'underline'
                 text.style.cursor = 'pointer'
 
@@ -117,19 +117,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                     location.reload()
                 })
             } else {
-                if (text.innerText === '') { addText(String(result.recording_text)) }
+                if (text.innerText === '') { addText() }
+                text.innerText = dict['python']
             }
         } else {
             chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                 if (tabs.length === 0) {
-                    if (text.innerText === '') { addText(dict['no_tab']) }
+                    if (text.innerText === '') { addText() }
+                    text.innerText = dict['no_tab']
 
                     startBtn.disabled = true
                     startBtn.style.backgroundColor = 'white'
                     startBtn.style.color = '#28a745'
 
                 } else if (!possiblePages.includes(superTrim(tabs[0].url))) {
-                    if (text.innerText === '') { addText(dict['bad_tab']) }
+                    if (text.innerText === '') { addText() }
+                    text.innerText = dict['no_tab']
 
                     startBtn.disabled = true
                     startBtn.style.backgroundColor = 'white'
@@ -152,8 +155,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     startRecording(startBtn, stopBtn)
                 } else if (key === 'recording_status' && newValue === 'stop') {
                     endRecording(startBtn, stopBtn)
-                } else if (key === 'recording_text') {
-                    if (text.innerText === '') { addText(String(newValue)) }
+                }
+                if (key === 'recording_text') {
+                    if (text.innerText === '') { addText() }
+                    text.innerText = String(newValue)
                 }
             }
         }

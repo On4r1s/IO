@@ -13,6 +13,8 @@ const langDict = {
         "analyzing": "analizowania",
         "recording": "nagraniem",
         "settings": "ustawieniami",
+        "low_space": "Mało miejsca, zwolnij",
+        "no_space": "Skończyło się miejsce, kończę nagrywanie",
     },
     "en": {
         "error_wl": "Error while",
@@ -20,6 +22,8 @@ const langDict = {
         "analyzing": "analyzing",
         "recording": "recording",
         "settings": "settings",
+        "low_space": "Little space left, free up",
+        "no_space": "No space left, finished recording",
     }
 }
 
@@ -82,6 +86,7 @@ async function analyze(stamp) {
             if (!request.ok) {
                 const dict = langDict[settings.lang]
                 const text = `${dict['error_wl']} ${dict['analyzing']}(${request.status})`
+                console.error(text)
                 chrome.storage.local.set({recording_text: text})
 
                 status = 'error'
@@ -94,7 +99,38 @@ async function analyze(stamp) {
     }
 }
 
+async function health() {
+    try {
+        const request = await fetch("http://127.0.0.1:5000/health", {
+            method: "GET",
+        })
+        if (!request.ok) {
+            const dict = langDict[settings.lang]
+            const text = `${dict['error_wl']} ${dict['recording']}(${request.status})`
+            chrome.storage.local.set({recording_text: text})
+
+        } else {
+            const free = Number(JSON.parse(await request.text())['left'])
+            let text = ''
+            if (free <= 0.146484) { // si approximation
+                text = langDict[settings.lang]['low_space']
+            } else if ( free < 0.048828) {
+                text = langDict[settings.lang]['no_space']
+                chrome.storage.local.set({recording_text: text})
+                chrome.storage.local.set({recording_status: 'stop'})
+            }
+
+            if (text !== '') {
+                chrome.storage.local.set({recording_text: text})
+            }
+        }
+    } catch (e) {
+        console.error(e)
+    }
+}
+
 // start or stop recording
+let interval
 async function recording(action) {
     chrome.storage.local.get(['recording_page'], async (result) => {
         if (result.recording_page !== null) {
@@ -109,11 +145,16 @@ async function recording(action) {
 
                     chrome.storage.local.set({recording_text: text})
                 } else { // all good
-                    chrome.storage.local.set({ recording_seconds: Date.now()})
+                    chrome.storage.local.set({recording_seconds: Date.now()})
                     if (action === 'start') {
-                        chrome.storage.local.set({ recording_status: 'start'})
+                        chrome.storage.local.set({recording_status: 'start'})
+                        await health()
+                        interval = setInterval(async () => { // checking health every n milliseconds
+                            await health()
+                        }, 10000) // 10 secs
                     } else if (action === 'stop') {
-                        chrome.storage.local.set({ recording_status: 'stop'})
+                        clearInterval(interval)
+                        chrome.storage.local.set({recording_status: 'stop'})
                         status = 'analyzing'
                         await analyze(await request.text())
                     }

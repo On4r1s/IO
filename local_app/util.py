@@ -1,20 +1,18 @@
 import json
 import os
 from subprocess import Popen, PIPE
-from datetime import datetime, timedelta
+import datetime
 import io
 import cv2
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
-from pdfMake import create_pdf
-import asyncio
 
 from PIL import Image
 from requests import request
 
 data_path = os.path.join(os.path.dirname(__file__)[:-10], 'data\\')
-settings = json.load(open('../data/settings.json'))
-photos = []
+settings = json.load(open(data_path + 'settings.json'))
+photos_stamps = []
 
 
 def mse(img1: bytes, img2: bytes) -> float:
@@ -30,17 +28,19 @@ def mse(img1: bytes, img2: bytes) -> float:
 
 
 def img_name():
-    global photos
-    name = datetime.now().strftime("%Y%m%d-%H%M%S%f")
-    photos.append(name)
+    global photos_stamps
+    name = datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")
+    photos_stamps.append(name)
     return data_path + '\\.temp\\imgs\\' + name + '.png'
 
 
-def delete_imgs():
-    global photos
-    for photo in photos:
-        os.remove(data_path + '.temp\\imgs\\' + photo)
-    photos = []
+def delete_files(stamp):
+    global photos_stamps
+    for photo in photos_stamps:
+        os.remove(data_path + '.temp\\imgs\\' + photo + '.png')
+    os.remove(data_path + f'.temp\\audio\\input{stamp}.wav')
+    os.remove(data_path + f'.temp\\audio\\output{stamp}.wav')
+    photos_stamps = []
     return
 
 
@@ -62,7 +62,7 @@ def end_recording(pipe):
 
 
 def transcribe(stamp):
-    to_send = str(photos).replace('"', "'").replace(" ", "")
+    to_send = str(photos_stamps).replace('"', "'").replace(" ", "")
 
     p_out = Popen(f"python Transcribe.py output {stamp} {settings['lang']} {to_send}",
                   stdin=PIPE, stdout=PIPE, shell=True)
@@ -79,8 +79,6 @@ def transcribe(stamp):
 
     # need to think, temporal solution
     gpt_request(transcribed_out, stamp)
-
-    asyncio.run(create_pdf(transcribed_out, data_path))
     return
 
 
@@ -90,7 +88,6 @@ def gpt_request(transcription, stamp):
         text += ' ' + elem
     body = '{"lang":"' + settings['lang'] + '", "transcription": "' + text + '"}'
     r = request(method="GET", url='http://localhost:8080/note', json=body, verify=False)
-    # need to think, temporal solution
-    f = open(f'../data/notes/note_{stamp}.txt', 'xb')
+    f = open(f'{data_path}notes\\note_{stamp}.txt', 'xb')
     f.write(r.text.encode('utf-8'))
     return
