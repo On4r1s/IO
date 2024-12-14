@@ -1,11 +1,17 @@
 document.getElementById("calendar-btn").addEventListener("click", () => {
-    alert("Calendar interactivity coming soon!");
+    chrome.tabs.update({
+        url: chrome.runtime.getURL('html/calendar.html')
+    })
 });
 
 document.getElementById("load-recordings-btn").addEventListener("click", () => {
-    alert("Loading recordings...");
+    chrome.tabs.update({
+        url: chrome.runtime.getURL('html/load-recordings.html')
+    })
 });
 
 document.getElementById("settings-btn").addEventListener("click", () => {
-    alert("Opening settings...");
+    chrome.tabs.update({
+        url: chrome.runtime.getURL('html/settings.html')
+    })
 });

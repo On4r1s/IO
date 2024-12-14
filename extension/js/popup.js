@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Settings
     settingsBtn.addEventListener('click', async() => {
         await chrome.tabs.create({
-            url: chrome.runtime.getURL('html/calendar.html')
+            url: chrome.runtime.getURL('html/main.html')
         })
     })
 })
