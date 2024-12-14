@@ -6,6 +6,9 @@ import io
 import cv2
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
+from pydub import AudioSegment
+import asyncio
+from pdfMake import create_pdf
 
 from PIL import Image
 from requests import request
@@ -72,21 +75,31 @@ def transcribe(stamp):
     except KeyError:
         to_send = []
 
-    p_out = Popen(f"python Transcribe.py output {stamp} {settings['lang']} {to_send}",
+    output = AudioSegment.from_wav(f'{data_path}.temp/audio/output{stamp}.wav')
+    input = AudioSegment.from_wav(f'{data_path}.temp/audio/input{stamp}.wav')
+
+    if output.duration_seconds > input.duration_seconds:
+        combined = output.overlay(input)
+    else:
+        combined = input.overlay(output)
+    combined = combined.set_frame_rate(16000)
+
+    combined.export(f'{data_path}.temp/audio/combined{stamp}.wav', format='wav')
+
+    p = Popen(f"python Transcribe.py combined {stamp} {settings['lang']} {to_send}",
                   stdin=PIPE, stdout=PIPE, shell=True)
-    p_in = Popen(f"python Transcribe.py input {stamp} {settings['lang']} {to_send}",
-                 stdin=PIPE, stdout=PIPE, shell=True)
 
-    transcribed_out = [elem[1:-1].replace('\r\n\x1b[0', '') for elem in
-                       str(p_out.stdout.read().decode('utf-8')).split("_")]
-    transcribed_in = [elem[1:-1].replace('\r\n\x1b[0', '') for elem in
-                      str(p_in.stdout.read().decode('utf-8')).split("_")]
+    transcribed = [elem[1:-1].replace('\r\n\x1b[0', '') for elem in
+                       str(p.stdout.read().decode('utf-8')).split("_")]
 
-    print(transcribed_in)
-    print(transcribed_out)
+    print(transcribed)
+
 
     # need to think, temporal solution
-    gpt_request(transcribed_out, stamp)
+    # gpt_request(transcribed_out, stamp)
+
+    asyncio.run(create_pdf(transcribed, data_path, photos_stamps))
+
     return
 
 
