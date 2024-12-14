@@ -4,129 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Management</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-        }
-        button {
-            margin: 5px 0;
-            padding: 10px;
-            font-size: 16px;
-        }
-        textarea {
-            width: 100%;
-            height: 200px;
-            margin-top: 10px;
-        }
-    </style>
+    <link rel="stylesheet"
+        href="../css/settings.css">
 </head>
 <body>
     <div class="container">
-        <h1>File Management</h1>
-
-        <h2>List All Files</h2>
-        <button onclick="listFiles()">Get Files</button>
-        <ul id="file-list"></ul>
-
-        <h2>View File</h2>
-        <input type="text" id="view-filename" placeholder="Enter file name" />
-        <button onclick="viewFile()">View File</button>
-        <textarea id="file-contents" readonly></textarea>
-        <div id="file-content">
-            <!-- PDF or Markdown content will be displayed here -->
-        </div>
-
-        <h2>Delete File</h2>
-        <input type="text" id="delete-filename" placeholder="Enter file name" />
-        <button onclick="deleteFile()">Delete File</button>
-        <p id="delete-message"></p>
+        <header>
+            <h1>File Management</h1>
+        </header>
+    
+        <section class="file-list-section">
+            <h2>List All Files</h2>
+            <button class="btn btn-primary" id="view_files_button">Get Files</button>
+            <ul id="file-list"></ul>
+        </section>
+    
+        <section class="view-file-section">
+            <h2>View File</h2>
+            <input type="text" id="view-filename" placeholder="Enter file name" aria-label="File name to view" />
+            <button class="btn btn-secondary" id="viewOneFileButton">View File</button>
+            <textarea id="file-contents" readonly placeholder="File content will appear here"></textarea>
+            <div id="file-content"></div>
+        </section>
+    
+        <section class="delete-file-section">
+            <h2>Delete File</h2>
+            <input type="text" id="delete-filename" placeholder="Enter file name" aria-label="File name to delete" />
+            <button class="btn btn-danger" id="delete-button">Delete File</button>
+            <p id="delete-message"></p>
+        </section>
     </div>
+    
 
-    <script>
-        const API_URL = "http://127.0.0.1:5000";
+    <script src="../js/settings.js">
 
-        // List all files
-        function listFiles() {
-            fetch(`${API_URL}/files`)
-                .then(response => response.json())
-                .then(data => {
-                    const fileList = document.getElementById("file-list");
-                    fileList.innerHTML = "";
-                    if (data.files) {
-                        data.files.forEach(file => {
-                            const li = document.createElement("li");
-                            li.textContent = file;
-                            fileList.appendChild(li);
-                        });
-                    } else {
-                        fileList.innerHTML = `<li>Error: ${data.error}</li>`;
-                    }
-                });
-        }
-
-        // View a file
-        function viewFile() {
-            const filename = document.getElementById("view-filename").value;
-            if (!filename) {
-                alert("Please enter a file name");
-                return;
-            }
-            const fileContent = document.getElementById("file-content");
-            fileContent.innerHTML = ""; // Clear previous content
-
-            const fileExtension = filename.split('.').pop().toLowerCase();
-
-            if (fileExtension === "pdf") {
-                // Render PDF in an iframe
-                fileContent.innerHTML = `<iframe src="${API_URL}/files/${filename}"></iframe>`;
-            }
-            // } else if (fileExtension === "md") {
-            //     // Fetch and display Markdown as rendered HTML
-            //     fetch(`${API_URL}/files/${filename}`)
-            //         .then(response => response.text())
-            //         .then(html => {
-            //             fileContent.innerHTML = html;
-            //         })
-            //         .catch(error => {
-            //             fileContent.innerHTML = `<p>Error loading file: ${error}</p>`;
-            //         });
-            // }
-            else
-            fetch(`${API_URL}/files/${filename}`)
-                .then(response => {
-                    if (response.ok) {
-                        return response.text();
-                    } else {
-                        return Promise.reject("File not found or error occurred.");
-                    }
-                })
-                .then(content => {
-                    document.getElementById("file-contents").value = content;
-                })
-                .catch(error => {
-                    document.getElementById("file-contents").value = error;
-                });
-        }
-
-        // Delete a file
-        function deleteFile() {
-            const filename = document.getElementById("delete-filename").value;
-            if (!filename) {
-                alert("Please enter a file name");
-                return;
-            }
-            fetch(`${API_URL}/files/${filename}`, { method: "DELETE" })
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById("delete-message").textContent = data.message || data.error;
-                    listFiles(); // Refresh file list
-                });
-        }
     </script>
 </body>
 </html>

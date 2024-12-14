@@ -114,7 +114,21 @@ def health():
 @app.get('/files')
 def get_files():
     try:
-        return jsonify({"files": os.listdir(os.path.join(data_path, '\\notes'))})
+        # Ścieżki do folderów
+        notes_path = os.path.join(data_path, 'notes')
+        transcriptions_path = os.path.join(data_path, 'transcriptions')
+
+        # Pobieranie listy plików z obu folderów
+        notes_files = os.listdir(notes_path) if os.path.exists(notes_path) else []
+        transcriptions_files = os.listdir(transcriptions_path) if os.path.exists(transcriptions_path) else []
+
+        # Łączenie plików z obu folderów w jeden słownik
+        files = {
+            "notes": notes_files,
+            "transcriptions": transcriptions_files
+        }
+
+        return jsonify(files)
     except Exception as e:
         print(e)
         return Response(status=500)
@@ -122,13 +136,14 @@ def get_files():
 
 @app.get('/files/<file>')
 def show_file(file):
+
     if file.lower().endswith('.pdf'):
-        file_path = os.path.join(data_path, '\\transcriptions\\' + file)
+        file_path = os.path.join(data_path, 'transcriptions', file)
         if not os.path.isfile(file_path):
             return Response(status=404)
         return send_file(str(file_path), mimetype='application/pdf')
     else:
-        file_path = os.path.join(data_path, '\\notes\\' + file)
+        file_path = os.path.join(data_path, 'notes', file)
         if not os.path.isfile(file_path):
             return Response(status=404)
         return send_file(str(file_path))
@@ -136,18 +151,20 @@ def show_file(file):
 
 @app.delete('/files/<file>')
 def delete_file(file):
-    file_path1 = os.path.join(data_path, '\\notes\\' + file)
-    file_path2 = os.path.join(data_path, '\\transcriptions\\' + file)
-    if os.path.isfile(file_path1):
-        try:
-            os.remove(file_path1)
-            os.remove(file_path2)
-            return Response(status=200)
-        except Exception as e:
-            print(e)
-            return Response(status=500)
+    file_path = None
+    if file.lower().endswith('.pdf'):
+        file_path = os.path.join(data_path, 'transcriptions', file)
     else:
-        return Response(status=404)
+        file_path = os.path.join(data_path, 'notes', file)
+    
+    if not os.path.isfile(file_path):
+        return jsonify({"error": "File not found"}), 404
+    
+    try:
+        os.remove(file_path)
+        return jsonify({"message": "File deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.get('/settings')
