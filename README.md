@@ -1,31 +1,19 @@
 # Bot for Meets, Teams and Zoom with AI-powered utilities
 
-### Useful links:
-
-- [chrome developers](https://developer.chrome.com/docs/extensions)
-- [mdn web docs](https://developer.mozilla.org/en-US/docs/Web)
-- [chrome extension examples](https://github.com/GoogleChrome/chrome-extensions-samples?tab=readme-ov-file)
-- [mdn extension examples](https://github.com/mdn/webextensions-examples)
-
 ## Functionality TBD
 
-- DIW
-- Transcription
-- Screen-sharing recording(auto)
 - Works on Meet / Zoom / Teams
 - integration with calendar
-- Notes in pdf / txt
-- UI:
-  - start & stop    
-  - searching through recorded material(OCR, transcription, notes)
-- Settings:
-  - max space available
-  - recording quality
-  - language(eng/pl)
-- people identification in recordings(to consider)
 
-## Progress atm
+## Installation
 
-- partial audio recording
-- partial local server for communication with extension
-- partial extension
+(assuming online server is running)
+
+0. Download WINRAR if you are not using windows 11
+1. Download .zip of this project, and unpack it (or clone the project)
+2. unpack extension part into chrome
+![image](https://github.com/user-attachments/assets/22483c6d-acab-4065-a103-cf8ac25c4734)
+3. Download python 3.11
+4. Run `pip install -r requirements.txt` in folder 'local_app'
+5. Run `python app.py` 
+6. Now you can successfully use IO-recorder in your chrome browser
