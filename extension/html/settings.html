@@ -3,12 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Back Button</title>
+    <title>Settings</title>
     <link rel="stylesheet"
         href="../css/settings.css">
 </head>
 <body>
+    <form id="settingsForm">
+        <label for="language">Język:</label>
+        <select id="language">
+            <option value="en" id="en">English</option>
+            <option value="pl" id="pl">Polish</option>
+        </select>
+    
+        <label for="recordingQuality">Jakość nagrywania:</label>
+        <input 
+            type="range" 
+            id="recordingQuality" 
+            min="1" 
+            max="100" 
+            step="1" 
+            value="50" 
+        />
+        <span id="qualityLabel">100</span>
+        
+    
+        <label for="maxDiskSpace">Maksymalne miejsce na dysku (GB):</label>
+        <input type="number" id="maxDiskSpace" min="1" step="1">
+        <div id="diskSpaceInfo">Ładowanie informacji o miejscu na dysku...</div>
 
+        <button type="button" id="saveButton">Zapisz ustawienia</button>
+    </form>
+    
     <!-- Przycisk powrotu -->
     <button id="backButton" class="back-button">Powrót</button>
 

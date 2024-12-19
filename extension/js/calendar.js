@@ -1,5 +1,51 @@
 const API_URL = "http://127.0.0.1:5000";
 
+const calendarLangDict = {
+    "pl": {
+        "title": "Kalendarz",
+        "add_meeting": "Dodaj spotkanie",
+        "date": "Data",
+        "start_time": "Godzina rozpoczęcia",
+        "end_time": "Godzina zakończenia",
+        "link": "Link",
+        "add_button": "Dodaj",
+        "no_meetings": "Brak spotkań na wybraną datę.",
+        "select_date": "Wybierz datę",
+        "delete": "Usuń",
+        "error_past_date": "Data musi być dzisiejsza lub przyszła.",
+        "error_time": "Godzina rozpoczęcia musi być wcześniejsza niż godzina zakończenia.",
+        "error_url": "Podaj poprawny URL.",
+        "prev": "Poprzedni",
+        "next": "Następny",
+        "month_names": [
+            "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", 
+            "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
+        ]
+    },
+    "en": {
+        "title": "Calendar",
+        "add_meeting": "Add Meeting",
+        "date": "Date",
+        "start_time": "Start Time",
+        "end_time": "End Time",
+        "link": "Link",
+        "add_button": "Add",
+        "no_meetings": "No meetings on the selected date.",
+        "select_date": "Select a date",
+        "delete": "Delete",
+        "error_past_date": "Date must be today or later.",
+        "error_time": "Start time must be earlier than end time.",
+        "error_url": "Please provide a valid URL.",
+        "prev": "Previous",
+        "next": "Next",
+        "month_names": [
+            "January", "February", "March", "April", "May", "June", 
+            "July", "August", "September", "October", "November", "December"
+        ]
+    }
+};
+
+
 async function listMeetings(selectedDate) {
     try {
         const response = await fetch(`${API_URL}/meetings`);

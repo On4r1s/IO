@@ -18,6 +18,10 @@ global time_start
 global active_stamp
 
 
+data_path = "./data/"
+settings_file = os.path.join(data_path, "settings.json")
+settings = {}
+
 @app.post('/recording')
 def recording():
     global active_pipe
@@ -170,31 +174,60 @@ def delete_file(file):
 @app.get('/settings')
 def send_settings():
     try:
-        return send_file(str(os.path.join(data_path, "settings.json")), mimetype='application/pdf')
-    except FileNotFoundError:
-        return Response(status=404)
+        # Wczytaj plik JSON, jeśli istnieje
+        if os.path.exists(settings_file):
+            with open(settings_file, "r") as f:
+                data = json.load(f)
+            return jsonify(data)
+        else:
+            return jsonify({"max_space": "10", "quality": "100", "lang": "en"})  # Domyślne ustawienia
     except Exception as e:
         print(e)
         return Response(status=500)
 
-
 @app.post('/settings')
 def change_settings():
     global settings
-    free = disk_usage("/")[2] / 1073741824
-    used = sum(f.stat().st_size for f in Path(data_path).glob('**/*') if f.is_file()) / 1073741824
     try:
+        free = disk_usage("/")[2] / 1073741824  # Wolne miejsce na dysku (GB)
+        used = sum(f.stat().st_size for f in Path(data_path).glob('**/*') if f.is_file()) / 1073741824
+
+
+                # Pobranie danych z żądania
+        if not flask.request.is_json:
+            return Response("Invalid JSON", status=400)
+        
         to_write = flask.request.get_json(force=True)
-        if used >= int(to_write['max_space']) >= free:
-            Response(status=400)
-        with open(data_path + "settings.json", "w") as f:
+        max_space = int(to_write.get('max_space', 0))
+        
+        # Sprawdź, czy wartość max_space jest poprawna
+        if max_space > free + used:
+            return Response("Not enough disk space.", status=400)
+        
+        # Zapisz dane do pliku JSON
+        os.makedirs(data_path, exist_ok=True)
+        with open(settings_file, "w") as f:
             json.dump(to_write, f)
             settings = to_write
         return Response(status=200)
     except Exception as e:
         print(e)
         return Response(status=500)
-
+    
+@app.route('/disk-space', methods=['GET'])
+def get_disk_space():
+    try:
+        free = disk_usage("/")[2]   # Wolne miejsce na dysku (GB)
+        used = sum(f.stat().st_size for f in Path(data_path).glob('**/*') if f.is_file())
+        total= disk_usage("/")[1] 
+        return jsonify({
+            "total": total // (1024**3),  # Całkowite miejsce (GB)
+            "used": used // (1024**3),    # Użyte miejsce (GB)
+            "free": free // (1024**3)     # Wolne miejsce (GB)
+        })
+    except Exception as e:
+        print(e)
+        return Response("Error retrieving disk space", status=500)
 
 @app.get('/meetings')
 def view_meetings():
