@@ -21,13 +21,15 @@ const translations = {
         saveButton: "Save Settings",
         diskSpaceInfoLabel: "Free Disk Space:",
         errorFetchingDiskSpace: "Failed to fetch disk space information.",
-        en:"English",
-        pl:"Polish",
+        en: "English",
+        pl: "Polish",
         recordingQualityOptions: {
             low: "Low",
             medium: "Medium",
             high: "High"
-        }
+        },
+        errorSavingSettings: "Error saving settings:",
+        settingSavedSuccesfully: "Setting Saved Succesfully"
     },
     pl: {
         languageLabel: "Język:",
@@ -36,13 +38,15 @@ const translations = {
         saveButton: "Zapisz ustawienia",
         diskSpaceInfoLabel: "Wolne miejsce na dysku:",
         errorFetchingDiskSpace: "Nie udało się pobrać informacji o miejscu na dysku.",
-        en:"Angielski",
-        pl:"Polski",
+        en: "Angielski",
+        pl: "Polski",
         recordingQualityOptions: {
             low: "Niska",
             medium: "Średnia",
             high: "Wysoka"
-        }
+        },
+        errorSavingSettings: "Błąd podczas zapisywania ustawień:",
+        settingSavedSuccesfully:"Ustawienia zapisane pomyślnie."
     }
 };
 
@@ -57,8 +61,9 @@ function updateUI() {
     document.getElementById('saveButton').textContent = translations[lang].saveButton;
 
     // Aktualizuj etykietę dla informacji o miejscu na dysku
+    console.log("Current language:", settings.language);
     document.getElementById('diskSpaceInfo').textContent = translations[lang].diskSpaceInfoLabel;
-
+    
     // Aktualizuj wartości formularza
     document.getElementById('language').value = settings.language;
     document.getElementById('recordingQuality').value = settings.recordingQuality;
@@ -104,29 +109,36 @@ function updateQualityLabel(value) {
     settings.recordingQuality = parseInt(value); // Aktualizuje bieżące ustawienia
 }
 
-// Funkcja wysyłająca ustawienia do serwera
 async function saveSettings() {
+    const settingsData = {
+        max_space: settings.maxDiskSpace,
+        quality: settings.recordingQuality,
+        lang: settings.language
+    };
+
     try {
+        // Zapisz ustawienia na serwerze
         const response = await fetch(`${API_URL}/settings`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                max_space: settings.maxDiskSpace,
-                quality: settings.recordingQuality,
-                lang: settings.language
-            })
+            body: JSON.stringify(settingsData)
         });
 
         if (response.ok) {
-            alert("Ustawienia zapisane pomyślnie.");
+            alert(`${translations[settings.language].settingSavedSuccesfully} `);
+
+            // Zapisz ustawienia w chrome.storage.local
+            chrome.storage.local.set({ settings: settingsData }, () => {
+                
+            });
         } else {
             const text = await response.text();
-            alert(`Błąd podczas zapisywania ustawień: ${text}`);
+            alert(`${translations[settings.language].errorSavingSettings} ${text}`);
         }
     } catch (error) {
-        console.error("Błąd podczas zapisywania ustawień:", error);
+        console.error((translations[settings.language].errorSavingSettings), error);
     }
     fetchDiskSpace();
     updateUI();
@@ -148,6 +160,7 @@ function handleInputChange(event) {
     }
 
     if (id === 'language') {
+        fetchDiskSpace();
         updateUI(); // Zaktualizuj tłumaczenia po zmianie języka
     }
 }
@@ -160,25 +173,54 @@ const inputs = document.querySelectorAll('#settingsForm input, #settingsForm sel
 inputs.forEach(input => input.addEventListener('change', handleInputChange));
 
 async function fetchSettings() {
+    let data;
+
     try {
+        // Pobierz ustawienia z serwera
         const response = await fetch(`${API_URL}/settings`);
-        if (!response.ok) {
-            throw new Error("Nie udało się pobrać ustawień");
+        if (response.ok) {
+            data = await response.json();
+
+            // Zapisz ustawienia w chrome.storage.local
+            chrome.storage.local.set({ settings: data }, () => {
+                
+            });
+        } else {
+            throw new Error("Nie udało się pobrać ustawień z serwera, używam lokalnych ustawień.");
         }
-        const data = await response.json();
-
-        // Aktualizacja ustawień lokalnych
-        settings.language = data.lang;
-        settings.recordingQuality = data.quality;
-        settings.maxDiskSpace = data.max_space;
-
-        // Zaktualizuj interfejs użytkownika
-        document.getElementById('recordingQuality').value = settings.recordingQuality;
-        document.getElementById('qualityLabel').textContent = `${settings.recordingQuality} GB`;
     } catch (error) {
-        console.error("Błąd:", error);
+        console.warn("Błąd podczas pobierania ustawień z serwera:", error);
+
+        // Pobierz ustawienia z chrome.storage.local
+        data = await new Promise((resolve) => {
+            chrome.storage.local.get("settings", (result) => {
+                if (result.settings) {
+                    resolve(result.settings);
+                } else {
+                    console.error("Brak ustawień w chrome.storage.local");
+                    resolve(null);
+                }
+            });
+        });
+
+        if (!data) {
+            return; // Jeśli brak ustawień, zakończ działanie
+        }
     }
+
+    // Aktualizacja ustawień lokalnych
+    settings.language = data.lang;
+    settings.recordingQuality = data.quality;
+    settings.maxDiskSpace = data.max_space;
+
+    // Zaktualizuj interfejs użytkownika
+    document.getElementById('recordingQuality').value = settings.recordingQuality;
+    document.getElementById('qualityLabel').textContent = `${settings.recordingQuality} GB`;
+
+    updateUI();
 }
+
+
 
 
 
@@ -191,22 +233,7 @@ document.getElementById('recordingQuality').addEventListener('input', function (
     settings.recordingQuality = parseInt(value, 10); // Aktualizuje bieżące ustawienia
 });
 
-async function fetchDiskSpace() {
-    try {
-        const response = await fetch(`${API_URL}/disk-space`);
-        if (!response.ok) {
-            throw new Error("Błąd podczas pobierania informacji o miejscu na dysku");
-        }
-        const data = await response.json();
-        // Wyświetl wolne miejsce
-        document.getElementById('diskSpaceInfo').textContent = 
-            `Wolne miejsce: ${data.free} GB / ${data.total} GB`;
-    } catch (error) {
-        console.error("Błąd:", error);
-        document.getElementById('diskSpaceInfo').textContent = 
-            "Nie udało się pobrać informacji o wolnym miejscu.";
-    }
-}
+
 document.addEventListener('DOMContentLoaded', function () {
     fetchDiskSpace(); // Pobierz dane o wolnym miejscu na dysku
 });

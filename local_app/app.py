@@ -18,10 +18,21 @@ global time_start
 global active_stamp
 
 
-data_path = "./data/"
-settings_file = os.path.join(data_path, "settings.json")
+data_path = "../data/"
+settings_file = os.path.join(data_path, 'settings.json')
+
 settings = {}
 
+translations = {
+    "en": {
+        "notEnoughDiskSpace": "Not enough disk space.",
+         
+    },
+    "pl": {
+        "notEnoughDiskSpace": "Brak wystarczającego miejsca na dysku"
+    }
+}
+         
 @app.post('/recording')
 def recording():
     global active_pipe
@@ -202,7 +213,8 @@ def change_settings():
         
         # Sprawdź, czy wartość max_space jest poprawna
         if max_space > free + used:
-            return Response("Not enough disk space.", status=400)
+            lang = to_write.get('lang', 'en')
+            return Response(translations[lang]["notEnoughDiskSpace"], status=400)
         
         # Zapisz dane do pliku JSON
         os.makedirs(data_path, exist_ok=True)
