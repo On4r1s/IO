@@ -45,14 +45,16 @@
         </div>
         
         <div class="add-meeting">
-            <h2>Dodaj spotkanie</h2>
+            <h2 id= "addMeetingH2">Dodaj spotkanie</h2>
             <form id="addMeetingForm">
-                <label>Data: <input type="date" id="date"></label><br>
-                <label>Godzina rozpoczęcia: <input type="time" id="startTime"></label><br>
-                <label>Godzina zakończenia: <input type="time" id="endTime"></label><br>
-                <label>Link: <input type="url" id="link"></label><br>
+                <label id="dateLabel"><span id="dateText">Data</span>: <input type="date" id="date"></label><br>
+                <label id="startTimeLabel"><span id="startTimeText">Godzina rozpoczęcia</span>: <input type="time" id="startTime"></label><br>
+                <label id="endTimeLabel"><span id="endTimeText">Godzina zakończenia</span>: <input type="time" id="endTime"></label><br>
+                <label id="linkLabel"><span id="linkText">Link</span>: <input type="url" id="link"></label><br>
                 <button type="submit">Dodaj</button>
             </form>
+            
+            
         </div>
             <div id="meetingsList"></div>
 

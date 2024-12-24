@@ -1,6 +1,27 @@
 const API_URL = "http://127.0.0.1:5000";
-
-
+language = "en"
+const calendarLangDict = {
+    pl: {
+        title: "Zarządzanie plikami",
+        listAllFiles: "Wszystkie pliki",
+        getFiles: "Pokaż pliki",
+        viewFile: "Obejrzyj plik",
+        enterFileName: "Wprowadź nazwę pliku",
+        fillerFileText: "Zawartość pliku pojawi się tutaj",
+        deleteFile: "Usuń plik",
+        backButton: "Powrót"
+    },
+    en: {
+        title: "File Management",
+        listAllFiles: "All Files",
+        getFiles: "Get Files",
+        viewFile: "View File",
+        enterFileName: "Enter File Name",
+        fillerFileText: "File content will appear here",
+        deleteFile: "Delete File",
+        backButton: "Back"
+    }
+};
 async function listFiles() {
     const fileList = document.getElementById("file-list");
     //fileList.innerHTML = `<li>Loading files...</li>`;
@@ -157,4 +178,32 @@ document.getElementById('backButton').addEventListener('click', function() {
     chrome.tabs.update({
         url: chrome.runtime.getURL('html/main.html')
     })
+});
+
+
+function translatePage(lang) {
+    if (!calendarLangDict[lang]) {
+        console.error(`Language "${lang}" is not supported.`);
+        return;
+    }
+
+    const translations = calendarLangDict[lang];
+
+    // Map translations to elements
+    document.getElementById("fileManagement").textContent = translations.title;
+    document.getElementById("listFiles").textContent = translations.listAllFiles;
+    document.getElementById("view_files_button").textContent = translations.getFiles;
+    document.getElementById("viewFiles").textContent = translations.viewFile;
+    document.getElementById("view-filename").placeholder = translations.enterFileName;
+    document.getElementById("file-contents").placeholder = translations.fillerFileText;
+    document.getElementById("deleteFile").textContent = translations.deleteFile;
+    document.getElementById("delete-filename").placeholder = translations.enterFileName;
+    document.getElementById("delete-button").textContent = translations.deleteFile;
+    document.getElementById("backButton").textContent = translations.backButton;
+}
+
+chrome.storage.local.get("settings", (result) => {
+    language = result.settings?.lang || "en"; // Default to English
+    translatePage(language);
+    
 });

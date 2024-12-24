@@ -1,47 +1,49 @@
 const API_URL = "http://127.0.0.1:5000";
-
+language = "en"
 const calendarLangDict = {
-    "pl": {
-        "title": "Kalendarz",
-        "add_meeting": "Dodaj spotkanie",
-        "date": "Data",
-        "start_time": "Godzina rozpoczęcia",
-        "end_time": "Godzina zakończenia",
-        "link": "Link",
-        "add_button": "Dodaj",
-        "no_meetings": "Brak spotkań na wybraną datę.",
-        "select_date": "Wybierz datę",
-        "delete": "Usuń",
-        "error_past_date": "Data musi być dzisiejsza lub przyszła.",
-        "error_time": "Godzina rozpoczęcia musi być wcześniejsza niż godzina zakończenia.",
-        "error_url": "Podaj poprawny URL.",
-        "prev": "Poprzedni",
-        "next": "Następny",
-        "month_names": [
+    pl: {
+        title: "Kalendarz",
+        add_meeting: "Dodaj spotkanie",
+        date: "Data",
+        start_time: "Godzina rozpoczęcia",
+        end_time: "Godzina zakończenia",
+        link: "Link",
+        add_button: "Dodaj",
+        no_meetings: "Brak spotkań na wybraną datę.",
+        select_date: "Wybierz datę",
+        delete: "Usuń",
+        error_past_date: "Data musi być dzisiejsza lub przyszła.",
+        error_time: "Godzina rozpoczęcia musi być wcześniejsza niż godzina zakończenia.",
+        error_url: "Podaj poprawny URL.",
+        prev: "Poprzedni",
+        next: "Następny",
+        month_names: [
             "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", 
             "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
-        ]
+        ],
+        back: "Powrót"
     },
-    "en": {
-        "title": "Calendar",
-        "add_meeting": "Add Meeting",
-        "date": "Date",
-        "start_time": "Start Time",
-        "end_time": "End Time",
-        "link": "Link",
-        "add_button": "Add",
-        "no_meetings": "No meetings on the selected date.",
-        "select_date": "Select a date",
-        "delete": "Delete",
-        "error_past_date": "Date must be today or later.",
-        "error_time": "Start time must be earlier than end time.",
-        "error_url": "Please provide a valid URL.",
-        "prev": "Previous",
-        "next": "Next",
-        "month_names": [
+    en: {
+        title: "Calendar",
+        add_meeting: "Add Meeting",
+        date: "Date",
+        start_time: "Start Time",
+        end_time: "End Time",
+        link: "Link",
+        add_button: "Add",
+        no_meetings: "No meetings on the selected date.",
+        select_date: "Select a date",
+        delete: "Delete",
+        error_past_date: "Date must be today or later.",
+        error_time: "Start time must be earlier than end time.",
+        error_url: "Please provide a valid URL.",
+        prev: "Previous",
+        next: "Next",
+        month_names: [
             "January", "February", "March", "April", "May", "June", 
             "July", "August", "September", "October", "November", "December"
-        ]
+        ],
+        back:"Back"
     }
 };
 
@@ -84,11 +86,16 @@ async function listMeetings(selectedDate) {
                 const meetingInfo = document.createElement("div");
                 meetingInfo.className = "meeting-info";
                 meetingInfo.innerHTML = `
-                    <p><strong>Data:</strong> ${meeting.date || "Brak danych"}</p>
-                    <p><strong>Godzina rozpoczęcia:</strong> ${meeting.startTime || "Brak danych"}</p>
-                    <p><strong>Godzina zakończenia:</strong> ${meeting.endTime || "Brak danych"}</p>
-                    <p><strong>Link:</strong> <a href="${meeting.link}" target="_blank">${meeting.link || "Brak linku"}</a></p>
-                `;
+                <p id="meeting-date"><strong>${calendarLangDict[language].date}:</strong> ${meeting.date || "Brak danych"}</p>
+                <p id="meeting-start-time"><strong>${calendarLangDict[language].start_time}:</strong> ${meeting.startTime || "Brak danych"}</p>
+                <p id="meeting-end-time"><strong>${calendarLangDict[language].end_time}:</strong> ${meeting.endTime || "Brak danych"}</p>
+                <p id="meeting-link">
+                    <strong>${calendarLangDict[language].link}:</strong> 
+                    ${meeting.link ? `<a href="${meeting.link}" target="_blank">${meeting.link}</a>` : "Brak linku"}
+                </p>
+            `;
+            
+            
 
                 // Przycisk "Usuń"
                 const deleteButton = document.createElement("button");
@@ -181,7 +188,7 @@ async function deleteMeeting(meetingId) {
         });
 
         const data = await response.json();
-        console.log(data.message);
+        //console.log(data.message);
         await listMeetings(selectedDate); // Odśwież listę
     } catch (error) {
         console.error("Błąd podczas usuwania spotkania:", error);
@@ -201,7 +208,7 @@ let selectedDate = null; // Przechowuje wybraną datę
 const day = document.querySelector(".calendar-dates");
 const currdate = document.querySelector(".calendar-current-date");
 const prenexIcons = document.querySelectorAll(".calendar-navigation span");
-
+/*
 // Tablica nazw miesięcy
 const months = [
     "January",
@@ -217,7 +224,16 @@ const months = [
     "November",
     "December"
 ];
+*/
+const months = calendarLangDict.en.month_names; // Default to English
 const manipulate = () => {
+
+    //console.log(calendarLangDict[language]?.month_names)
+    localizedMonths = calendarLangDict[language]?.month_names || months;
+    //console.log(localizedMonths)
+    // Use localizedMonths in your calendar rendering logic
+    //currdate.innerText = `${localizedMonths[month]} ${year}`;
+
     let dayone = new Date(year, month, 1).getDay();
     let lastdate = new Date(year, month + 1, 0).getDate();
     let dayend = new Date(year, month, lastdate).getDay();
@@ -250,7 +266,7 @@ const manipulate = () => {
         lit += `<li class="inactive">${i - dayend + 1}</li>`;
     }
 
-    currdate.innerText = `${months[month]} ${year}`;
+    currdate.innerText = `${localizedMonths[month]} ${year}`;
     day.innerHTML = lit;
 
     const days = document.querySelectorAll(".calendar-dates li:not(.inactive)");
@@ -310,6 +326,7 @@ prenexIcons.forEach(icon => {
 
             // Set the month to the new month
             month = date.getMonth();
+            
         }
 
         else {
@@ -328,3 +345,47 @@ document.getElementById('backButton').addEventListener('click', function() {
         url: chrome.runtime.getURL('html/main.html')
     })
 });
+
+// Fetch and apply the language dynamically
+function updateCalendarLanguage(language) {
+    const translations = calendarLangDict[language];
+
+    // Update static text
+    //document.querySelector(".calendar-current-date").textContent = translations.title;
+
+    
+
+    // Update form labels and buttons
+    document.getElementById('dateText').textContent = calendarLangDict[language].date 
+    document.getElementById('startTimeText').textContent = calendarLangDict[language].start_time
+    document.getElementById('endTimeText').textContent = calendarLangDict[language].end_time 
+    document.getElementById('linkText').textContent = calendarLangDict[language].link 
+    
+    document.getElementById('addMeetingH2').textContent = calendarLangDict[language].add_meeting
+    document.getElementById('backButton').textContent = calendarLangDict[language].back
+    console.log(calendarLangDict[language].month_names)
+    // Update messages
+    document.querySelector("#meetingsList").textContent = translations.no_meetings;
+    //updateMeetingLabels(translations[language]);
+}
+
+// Fetch language from storage and initialize
+chrome.storage.local.get("settings", (result) => {
+    language = result.settings?.lang || "en"; // Default to English
+    updateCalendarLanguage(language);
+    manipulate(); // Refresh calendar to apply localized month names
+});
+
+
+
+// Wait for DOM to fully load
+document.addEventListener("DOMContentLoaded", () => {
+    // Fetch language setting and apply translations
+    chrome.storage.local.get("settings", (result) => {
+        language = result.settings?.lang || "en"; // Default to English
+        //applyTranslations(language);
+    });
+});
+//document.getElementById('dateLabel').textContent = "${calendarLangDict[language].date}:"
+
+
