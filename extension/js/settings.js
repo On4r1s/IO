@@ -131,8 +131,12 @@ async function saveSettings() {
 
             // Zapisz ustawienia w chrome.storage.local
             chrome.storage.local.set({ settings: settingsData }, () => {
-                
+            
             });
+            console.log(settingsData.lang)
+            console.log(settingsData)
+            changeRecordingLanguage(settingsData.lang)    
+
         } else {
             const text = await response.text();
             alert(`${translations[settings.language].errorSavingSettings} ${text}`);
@@ -144,7 +148,18 @@ async function saveSettings() {
     updateUI();
 }
 
+function changeRecordingLanguage(newLang) {
 
+    chrome.storage.local.get(['recording_settings'], (result) => {
+        let settings = result.recording_settings || {}; // Pobierz istniejące ustawienia lub stwórz pusty obiekt
+        settings.lang = newLang; // Zmień język na nowy
+
+        // Zapisz zmienione ustawienia z powrotem do storage
+        chrome.storage.local.set({ recording_settings: settings }, () => {
+            console.log(`Language changed to: ${newLang}`);
+        });
+    });
+}
 
 
 
