@@ -2,13 +2,13 @@ from base64 import b64decode
 from io import BytesIO
 from pathlib import Path
 from shutil import disk_usage
-
+import json
 from flask import Flask, Response, jsonify, send_file
 import flask
 from flask_cors import CORS
 import re
 from util import *
-
+import datetime
 app = Flask(__name__)
 # will work without, but better to have it
 CORS(app)
@@ -20,7 +20,7 @@ global active_stamp
 
 data_path = "../data/"
 settings_file = os.path.join(data_path, 'settings.json')
-
+meeting_file = os.path.join(data_path, 'meeting.json')
 settings = {}
 
 translations = {
@@ -244,7 +244,7 @@ def get_disk_space():
 @app.get('/meetings')
 def view_meetings():
     try:
-        filename = data_path + "spotkania.json"
+        filename = data_path + "meeting.json"
 
         # Jeśli plik nie istnieje, utwórz go
         if not os.path.exists(filename):
@@ -265,13 +265,13 @@ def view_meetings():
 
 
 def save_meetings(meetings):
-    filename = data_path + "spotkania.json"
+    filename = data_path + "meeting.json"
     with open(filename, "w") as file:
         json.dump(meetings, file, indent=4)
 
 
 def load_meetings():
-    filename = data_path + "spotkania.json"
+    filename = data_path + "meeting.json"
     with open(filename, "r") as file:
         try:
             meetings = json.load(file)
@@ -359,6 +359,10 @@ def delete_meeting(meeting_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+next_meeting = find_next_meeting(meeting_file)
+print(next_meeting)
 
 if __name__ == '__main__':
     app.run()
+
+

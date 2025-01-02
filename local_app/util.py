@@ -112,3 +112,31 @@ def gpt_request(transcription, stamp):
     f = open(f'{data_path}notes\\note_{stamp}.txt', 'xb')
     f.write(r.text.encode('utf-8'))
     return
+
+def find_next_meeting(file_path):
+    # Wczytanie danych z pliku JSON
+    with open(file_path, 'r') as file:
+        data = file.read()  # Wczytaj zawartość jako tekst
+        #print("Wczytane dane:", data)  # Debug: wyświetl wczytane dane
+        meetings = json.loads(data)  # Przekształć tekst na obiekt JSON
+        #print("Meetings jako JSON:", meetings)  # Debug: wyświetl przetworzone dane
+    # Parsowanie daty i czasu oraz znalezienie najbliższego spotkania
+    now = datetime.datetime.now()
+    
+    # Tworzymy listę spotkań z przekształconą datą i czasem
+    parsed_meetings = [
+        {
+            **meeting,
+            "start_datetime": datetime.datetime.strptime(meeting["date"] + " " + meeting["startTime"], "%Y-%m-%d %H:%M")
+        }
+        for meeting in meetings
+    ]
+
+    # Filtrujemy spotkania, które zaczynają się po aktualnym czasie
+    future_meetings = [m for m in parsed_meetings if m["start_datetime"] > now]
+
+    # Sortujemy przyszłe spotkania po czasie rozpoczęcia
+    future_meetings.sort(key=lambda m: m["start_datetime"])
+
+    # Zwracamy pierwsze najbliższe spotkanie (lub None jeśli brak)
+    return future_meetings[0] if future_meetings else None
