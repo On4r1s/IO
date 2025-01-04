@@ -177,6 +177,13 @@ document.getElementById("addMeetingForm").addEventListener("submit", event => {
             console.log("Spotkanie dodane:", data.message);
             listMeetings(selectedDate); // Odśwież listę spotkań dla wybranej daty
             manipulate(); // Odśwież kalendarz
+            chrome.runtime.sendMessage({ action: "monitorMeetings" }, (response) => {
+            if (chrome.runtime.lastError) {
+                console.error("Error sending message to background:", chrome.runtime.lastError);
+            } else {
+                console.log("monitorMeetings triggered:", response);
+            }
+});
         })
         .catch(error => console.error("Błąd podczas dodawania spotkania:", error));
 });

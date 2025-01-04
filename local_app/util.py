@@ -47,6 +47,7 @@ def delete_files(stamp):
         os.remove(data_path + '.temp\\imgs\\' + photo + '.png')
     os.remove(data_path + f'.temp\\audio\\input{stamp}.wav')
     os.remove(data_path + f'.temp\\audio\\output{stamp}.wav')
+    os.remove(data_path + f'.temp\\audio\\combined{stamp}.wav')
     del photos_stamps[stamp]
     return
 
@@ -99,6 +100,7 @@ def transcribe(stamp):
     # gpt_request(transcribed_out, stamp)
 
     asyncio.run(create_pdf(transcribed, data_path, photos_stamps))
+    delete_files(stamp)
 
     return
 
