@@ -165,7 +165,7 @@ function scheduleRecording(meeting) {
                 clearInterval(checkInterval); // Zatrzymujemy sprawdzanie, jeśli nagrywanie zakończone
             }
         }, 10000); // Sprawdzamy co minutę (60000 ms)
-    
+
     }else {
         console.log("Spotkanie już się rozpoczęło lub zakończyło.");
     }
@@ -218,24 +218,24 @@ async function findNextMeeting(url) {
     }
 }
 
-let lastHandledMeetingId = null; // Zmienna do przechowywania ID ostatniego spotkania
-
-(async () => {
-    const url = 'http://127.0.0.1:5000/meetings'; // URL do pliku JSON lub API
-    const nextMeeting = await findNextMeeting(url);
-    //chrome.storage.local.set({ recording_status: 'stop' });
-    if (nextMeeting) {
-        console.log("Najbliższe spotkanie:", nextMeeting);
-
-        // Sprawdź, czy to spotkanie nie zostało już obsłużone
-        if (lastHandledMeetingId !== nextMeeting.id) {
-            lastHandledMeetingId = nextMeeting.id; // Zaktualizuj obsłużone spotkanie
-            scheduleRecording(nextMeeting);
-        } else {
-            console.log("To spotkanie już zostało obsłużone.");
-        }
-    } else {
-        console.log("Brak przyszłych spotkań.");
-    }
-})();
+// let lastHandledMeetingId = null; // Zmienna do przechowywania ID ostatniego spotkania
+//
+// (async () => {
+//     const url = 'http://127.0.0.1:5000/meetings'; // URL do pliku JSON lub API
+//     const nextMeeting = await findNextMeeting(url);
+//     //chrome.storage.local.set({ recording_status: 'stop' });
+//     if (nextMeeting) {
+//         console.log("Najbliższe spotkanie:", nextMeeting);
+//
+//         // Sprawdź, czy to spotkanie nie zostało już obsłużone
+//         if (lastHandledMeetingId !== nextMeeting.id) {
+//             lastHandledMeetingId = nextMeeting.id; // Zaktualizuj obsłużone spotkanie
+//             scheduleRecording(nextMeeting);
+//         } else {
+//             console.log("To spotkanie już zostało obsłużone.");
+//         }
+//     } else {
+//         console.log("Brak przyszłych spotkań.");
+//     }
+// })();
 

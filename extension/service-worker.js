@@ -167,6 +167,9 @@ async function recording(action) {
 }
 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+    if(message.action === "monitorMeetings") {
+        return;
+    }
     if (message === 'change') {
         await getSettings()
     } else {
@@ -293,6 +296,7 @@ function checkForActiveMeetingWithRetries(meeting, retries) {
     detectMeeting((isActive) => {
         if (isActive) {
             console.log("User is in an active meeting within calendar date. Start recording");
+            recording('start');
             const now = new Date();
             const meetingEndTime = new Date(`${meeting.date}T${meeting.endTime}`);
             const timeUntilEnd = meetingEndTime - now;
@@ -301,8 +305,7 @@ function checkForActiveMeetingWithRetries(meeting, retries) {
                 console.log(`Scheduling stop of recording for meeting ${meeting.id} in ${timeUntilEnd / 1000} seconds.`);
                 setTimeout(() => {
                     console.log("Meeting end time! Stopping recording.");
-                    // Stop recording
-                    monitorMeetings();
+                    recording('stop');
                 }, timeUntilEnd);
             } else {
                 console.log("Meeting end time has already passed. No need to schedule stop.");
