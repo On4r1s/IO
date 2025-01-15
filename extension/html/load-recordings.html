@@ -18,7 +18,15 @@
             <button class="btn btn-primary" id="view_files_button">Get Files</button>
             <ul id="file-list"></ul>
         </section>
-    
+        <section class="search-container">
+            <h2 id="searchFiles">Wyszukaj w Plikach</h2>
+            <input type="text" id="searchText" placeholder="Wpisz frazę do wyszukania...">
+            <button id="searchButton">Szukaj</button>
+        </section>
+        <section class="results" id="results" style="display: none;">
+            <h3 id="searchResult">Wyniki wyszukiwania:</h3>
+            <ul id="resultsList"></ul>
+        </section>
         <section class="view-file-section">
             <h2 id="viewFiles">View File</h2>
             <input type="text" id="view-filename" placeholder="Enter file name" aria-label="File name to view" />

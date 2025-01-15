@@ -108,3 +108,61 @@ button:hover {
 .back-button:active {
     background-color: #003f7f;
 }
+
+.search-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    
+    background: #fff;
+    
+    border-radius: 8px;
+}
+.search-container h2 {
+    margin: 0 0 15px;
+    color: #333333;
+    
+}
+.search-container input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    margin-bottom: 10px;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+}
+.search-container button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    
+}
+.search-container button:hover {
+    background-color: #45a049;
+}
+.results {
+    margin-top: 20px;
+    background: #ffffff;
+    
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    
+    width: 100%;
+}
+.results h3 {
+    margin: 0 0 10px;
+    color: #333333;
+}
+.results ul {
+    list-style: none;
+    padding: 0;
+}
+.results li {
+    background: #f9f9f9;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    border: 1px solid #dddddd;
+}

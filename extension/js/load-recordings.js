@@ -9,7 +9,11 @@ const calendarLangDict = {
         enterFileName: "Wprowadź nazwę pliku",
         fillerFileText: "Zawartość pliku pojawi się tutaj",
         deleteFile: "Usuń plik",
-        backButton: "Powrót"
+        backButton: "Powrót",
+        searchFiles: "Wyszukaj w plikach",
+        searchButton: "Szukaj",
+        searchResult: "Wyniki wyszukiwania",
+        enterPhase:"Wpisz frazę do wyszukania...",
     },
     en: {
         title: "File Management",
@@ -19,7 +23,11 @@ const calendarLangDict = {
         enterFileName: "Enter File Name",
         fillerFileText: "File content will appear here",
         deleteFile: "Delete File",
-        backButton: "Back"
+        backButton: "Back",
+        searchFiles: "Search in files",
+        searchButton: "Search",
+        searchResult: "Results of a search",
+        enterPhase: "Enter Phase to search...",
     }
 };
 async function listFiles() {
@@ -200,10 +208,57 @@ function translatePage(lang) {
     document.getElementById("delete-filename").placeholder = translations.enterFileName;
     document.getElementById("delete-button").textContent = translations.deleteFile;
     document.getElementById("backButton").textContent = translations.backButton;
+    document.getElementById("searchFiles").textContent = translations.searchFiles;
+    document.getElementById("searchButton").textContent = translations.searchButton;
+    document.getElementById("searchResult").textContent = translations.searchResult;
+    document.getElementById("searchText").placeholder = translations.enterPhase;
 }
 
 chrome.storage.local.get("settings", (result) => {
     language = result.settings?.lang || "en"; // Default to English
     translatePage(language);
     
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const searchButton = document.getElementById('searchButton');
+    const searchText = document.getElementById('searchText');
+    const resultsDiv = document.getElementById('results');
+    const resultsList = document.getElementById('resultsList');
+
+    searchButton.addEventListener('click', async function() {
+        const query = searchText.value.trim();
+        resultsList.innerHTML = ''; // Clear previous results
+        resultsDiv.style.display = 'none';
+
+        if (!query) {
+            alert('Proszę wpisać frazę do wyszukania.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/search/${encodeURIComponent(query)}`);
+            if (!response.ok) {
+                throw new Error('Błąd podczas komunikacji z serwerem.');
+            }
+
+            const data = await response.json();
+            const files = data.matching_files;
+
+            if (files.length === 0) {
+                resultsList.innerHTML = '<li>Brak wyników.</li>';
+            } else {
+                files.forEach(file => {
+                    const li = document.createElement('li');
+                    li.textContent = file;
+                    resultsList.appendChild(li);
+                });
+            }
+
+            resultsDiv.style.display = 'block';
+        } catch (error) {
+            console.error('Błąd:', error);
+            alert('Wystąpił błąd podczas wyszukiwania. Spróbuj ponownie.');
+        }
+    });
 });

@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
 from pydub import AudioSegment
+from PyPDF2 import PdfReader
 import asyncio
 from pdfMake import create_pdf
 
@@ -115,6 +116,52 @@ def gpt_request(transcription, stamp):
     f.write(r.text.encode('utf-8'))
     return
 
+
+def read_file_with_encoding(file_path):
+    """
+    Próbuj odczytać plik z różnymi kodowaniami.
+    :param file_path: Ścieżka do pliku.
+    :return: Treść pliku.
+    """
+    encodings = ['utf-8', 'ISO-8859-2', 'windows-1250']  # Kodowania do sprawdzenia
+    for encoding in encodings:
+        try:
+            with open(file_path, 'r', encoding=encoding) as file:
+                return file.read()
+        except UnicodeDecodeError:
+            continue
+    raise Exception(f"Nie udało się odczytać pliku {file_path} z dostępnymi kodowaniami.")
+
+def search_in_file(file_path, search_text):
+    """
+    Sprawdza, czy podany ciąg znaków znajduje się w pliku tekstowym lub PDF.
+
+    :param file_path: Ścieżka do pliku.
+    :param search_text: Ciąg znaków do wyszukania.
+    :return: True, jeśli ciąg znaków znajduje się w pliku, False w przeciwnym razie.
+    """
+    if file_path.lower().endswith('.txt'):
+        try:
+            content = read_file_with_encoding(file_path)
+            return search_text in content
+        except Exception as e:
+            raise Exception(f"Nie udało się otworzyć pliku tekstowego: {e}")
+
+    elif file_path.lower().endswith('.pdf'):
+        try:
+            reader = PdfReader(file_path)
+            for page in reader.pages:
+                if search_text in page.extract_text():
+                    return True
+            return False
+        except Exception as e:
+            raise Exception(f"Nie udało się otworzyć pliku PDF: {e}")
+
+    else:
+        raise ValueError("Obsługiwane są tylko pliki z rozszerzeniem .txt lub .pdf.")
+
+    
+"""
 def find_next_meeting(file_path):
     # Wczytanie danych z pliku JSON
     with open(file_path, 'r') as file:
@@ -142,3 +189,4 @@ def find_next_meeting(file_path):
 
     # Zwracamy pierwsze najbliższe spotkanie (lub None jeśli brak)
     return future_meetings[0] if future_meetings else None
+    """

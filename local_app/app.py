@@ -9,6 +9,7 @@ from flask_cors import CORS
 import re
 from util import *
 import datetime
+from PyPDF2 import PdfReader
 app = Flask(__name__)
 # will work without, but better to have it
 CORS(app)
@@ -359,8 +360,33 @@ def delete_meeting(meeting_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-next_meeting = find_next_meeting(meeting_file)
-print(next_meeting)
+@app.route('/search/<search_text>', methods=['GET'])
+def search_in_all_files(search_text):
+
+    matching_files = []
+    notes_path = os.path.join(data_path, 'notes')
+    transcriptions_path = os.path.join(data_path, 'transcriptions')
+    # Przeszukujemy pliki txt
+    for file_name in os.listdir(notes_path):
+        file_path = os.path.join(notes_path, file_name)
+        if os.path.isfile(file_path) and file_name.lower().endswith('.txt'):
+            try:
+                if search_in_file(file_path, search_text):
+                    matching_files.append(file_name)
+            except Exception as e:
+                print(f"Błąd podczas przetwarzania pliku {file_name}: {e}")
+
+    # Przeszukujemy pliki pdf
+    for file_name in os.listdir(transcriptions_path):
+        file_path = os.path.join(transcriptions_path, file_name)
+        if os.path.isfile(file_path) and file_name.lower().endswith('.pdf'):
+            try:
+                if search_in_file(file_path, search_text):
+                    matching_files.append(file_name)
+            except Exception as e:
+                print(f"Błąd podczas przetwarzania pliku {file_name}: {e}")
+
+    return jsonify({"matching_files": matching_files})
 
 if __name__ == '__main__':
     app.run()
