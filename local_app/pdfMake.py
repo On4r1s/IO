@@ -16,7 +16,7 @@ def add_image_to_pdf(pdf, img_path, current_x, current_y, max_y, y_margin):
 
 async def create_pdf(transcripts, data_path, photos):
     screenshots_folder = os.path.join(data_path, '.temp\\imgs')
-    output_folder = os.path.join(data_path, 'transcriptions')
+    output_folder = os.path.join(data_path, 'transcripts')
     output_pdf = f"{list(photos.keys())[0]}.pdf"
 
     #list of images

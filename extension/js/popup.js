@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.storage.local.get(['recording_text'], (result) => {
         if (result.recording_text !== '') {
 
-            if (result.recording_text === 'default') {
+            if (String(result.recording_text) === 'default') {
                 if (text.innerText === '') { addText() }
                 text.innerText = dict['python']
                 text.style.textDecorationLine = 'underline'
@@ -116,9 +116,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     await chrome.runtime.sendMessage('change')
                     location.reload()
                 })
-            } else {
-                if (text.innerText === '') { addText() }
-                text.innerText = dict['python']
             }
         } else {
             chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {

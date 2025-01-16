@@ -2,7 +2,7 @@ import json
 import os
 from subprocess import Popen, PIPE
 import datetime
-import io
+from io import BytesIO
 import cv2
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
@@ -54,7 +54,7 @@ def delete_files(stamp):
 
 
 def save_image(img, stamp):
-    img = Image.open(io.BytesIO(img))
+    img = Image.open(BytesIO(img))
     sizes = [int(elem * int(settings['quality']) / 100) for elem in img.size]
     img = img.resize(sizes, Image.Resampling.LANCZOS)
     img.save(img_name(stamp))
@@ -89,15 +89,13 @@ def transcribe(stamp):
     combined.export(f'{data_path}.temp/audio/combined{stamp}.wav', format='wav')
 
     p = Popen(f"python Transcribe.py combined {stamp} {settings['lang']} {to_send}",
-                  stdin=PIPE, stdout=PIPE, shell=True)
+              stdin=PIPE, stdout=PIPE, shell=True)
 
-    transcribed = [elem[1:-1].replace('\r\n\x1b[0', '') for elem in
-                       str(p.stdout.read().decode('utf-8')).split("_")]
+    transcribed = [elem.replace('\r\n\x1b[0', '') for elem in
+                   str(str(p.stdout.read().decode('utf-8')).split("_"))]
 
     print(transcribed)
 
-
-    # need to think, temporal solution
     # gpt_request(transcribed_out, stamp)
 
     asyncio.run(create_pdf(transcribed, data_path, photos_stamps))
@@ -132,6 +130,7 @@ def read_file_with_encoding(file_path):
             continue
     raise Exception(f"Nie udało się odczytać pliku {file_path} z dostępnymi kodowaniami.")
 
+
 def search_in_file(file_path, search_text):
     """
     Sprawdza, czy podany ciąg znaków znajduje się w pliku tekstowym lub PDF.
@@ -160,7 +159,7 @@ def search_in_file(file_path, search_text):
     else:
         raise ValueError("Obsługiwane są tylko pliki z rozszerzeniem .txt lub .pdf.")
 
-    
+
 """
 def find_next_meeting(file_path):
     # Wczytanie danych z pliku JSON

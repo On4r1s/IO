@@ -1,15 +1,12 @@
 from base64 import b64decode
-from io import BytesIO
 from pathlib import Path
 from shutil import disk_usage
-import json
 from flask import Flask, Response, jsonify, send_file
 import flask
 from flask_cors import CORS
 import re
 from util import *
-import datetime
-from PyPDF2 import PdfReader
+
 app = Flask(__name__)
 # will work without, but better to have it
 CORS(app)
@@ -22,7 +19,6 @@ global active_stamp
 data_path = "../data/"
 settings_file = os.path.join(data_path, 'settings.json')
 meeting_file = os.path.join(data_path, 'meeting.json')
-settings = {}
 
 translations = {
     "en": {
@@ -59,6 +55,7 @@ def recording():
             return Response(status=200)
 
         elif flask.request.headers.get('action') == 'stop':
+            end_recording(active_pipe)
             active_pipe = None
             stamp = active_stamp
             active_stamp = None
@@ -132,7 +129,7 @@ def get_files():
     try:
         # Ścieżki do folderów
         notes_path = os.path.join(data_path, 'notes')
-        transcriptions_path = os.path.join(data_path, 'transcriptions')
+        transcriptions_path = os.path.join(data_path, 'transcripts')
 
         # Pobieranie listy plików z obu folderów
         notes_files = os.listdir(notes_path) if os.path.exists(notes_path) else []
@@ -154,7 +151,7 @@ def get_files():
 def show_file(file):
 
     if file.lower().endswith('.pdf'):
-        file_path = os.path.join(data_path, 'transcriptions', file)
+        file_path = os.path.join(data_path, 'transcripts', file)
         if not os.path.isfile(file_path):
             return Response(status=404)
         return send_file(str(file_path), mimetype='application/pdf')
@@ -169,7 +166,7 @@ def show_file(file):
 def delete_file(file):
     file_path = None
     if file.lower().endswith('.pdf'):
-        file_path = os.path.join(data_path, 'transcriptions', file)
+        file_path = os.path.join(data_path, 'transcripts', file)
     else:
         file_path = os.path.join(data_path, 'notes', file)
     
@@ -192,7 +189,7 @@ def send_settings():
                 data = json.load(f)
             return jsonify(data)
         else:
-            return jsonify({"max_space": "10", "quality": "100", "lang": "en"})  # Domyślne ustawienia
+            return jsonify({"max_space": 10, "quality": 100, "lang": "en"})  # Domyślne ustawienia
     except Exception as e:
         print(e)
         return Response(status=500)
@@ -360,12 +357,13 @@ def delete_meeting(meeting_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/search/<search_text>', methods=['GET'])
 def search_in_all_files(search_text):
 
     matching_files = []
     notes_path = os.path.join(data_path, 'notes')
-    transcriptions_path = os.path.join(data_path, 'transcriptions')
+    transcriptions_path = os.path.join(data_path, 'transcripts')
     # Przeszukujemy pliki txt
     for file_name in os.listdir(notes_path):
         file_path = os.path.join(notes_path, file_name)
@@ -388,7 +386,6 @@ def search_in_all_files(search_text):
 
     return jsonify({"matching_files": matching_files})
 
+
 if __name__ == '__main__':
     app.run()
-
-
