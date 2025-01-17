@@ -14,6 +14,20 @@ const calendarLangDict = {
         searchButton: "Szukaj",
         searchResult: "Wyniki wyszukiwania",
         enterPhase:"Wpisz frazę do wyszukania...",
+        viewFile: "Obejrzyj plik",
+        enterFileAlert: "Wprowadź nazwę pliku",
+        deletionFileError: "Nie udało się usunąć pliku. Spróbuj ponownie.",
+        deletioSuccesfull: "Plik usunięty pomyślnie",
+        fileNotFound: "Plik nie zostal znaleziony",
+        errorOcurred: "Nie znaleziono pliku lub wystąpił błąd.",
+        fetchFilesError: "Błąd podczas pobierania plików. Spróbuj ponownie później.",
+        serwerCommunicationError: "Błąd podczas komunikacji z serwerem.",
+        enterSearch: "Proszę wpisać frazę do wyszukania.",
+        noResults: "Brak wyników.",
+        again: "Spróbuj ponownie",
+        filesNotFound: "Pliki nie zostały znalezione",
+        notes: "Notatki",
+        transcriptions: "Transkrypcje:",
     },
     en: {
         title: "File Management",
@@ -28,6 +42,20 @@ const calendarLangDict = {
         searchButton: "Search",
         searchResult: "Results of a search",
         enterPhase: "Enter Phase to search...",
+        viewFile: "View File",
+        enterFileAlert: "Please enter a file name",
+        deletionFileError: "Failed to delete the file. Please try again.",
+        deletioSuccesfull: "File deleted successfully.",
+        fileNotFound: "File not found.",
+        errorOcurred: "File not found or error occurred.",
+        fetchFilesError: "Error fetching files. Please try again later.",
+        serwerCommunicationError: "Communication error with the server.",
+        enterSearch: "Please enter the phrase to search for.", 
+        noResuls: "No search results", 
+        again: "Wystąpił błąd podczas wyszukiwania. Spróbuj ponownie.",
+        filesNotFound: "Files not found.",
+        notes: "Notes:",
+        transcriptions: "Transcriptions:",
     }
 };
 async function listFiles() {
@@ -41,7 +69,7 @@ async function listFiles() {
         if (data.notes || data.transcriptions) {
             if (data.notes && data.notes.length > 0) {
                 const notesHeader = document.createElement("h3");
-                notesHeader.textContent = "Notes:";
+                notesHeader.textContent = calendarLangDict[language].notes;
                 fileList.appendChild(notesHeader);
 
                 const notesList = document.createElement("ul");
@@ -55,7 +83,7 @@ async function listFiles() {
 
             if (data.transcriptions && data.transcriptions.length > 0) {
                 const transcriptionsHeader = document.createElement("h3");
-                transcriptionsHeader.textContent = "Transcriptions:";
+                transcriptionsHeader.textContent = calendarLangDict[language].transcriptions;
                 fileList.appendChild(transcriptionsHeader);
 
                 const transcriptionsList = document.createElement("ul");
@@ -67,11 +95,11 @@ async function listFiles() {
                 fileList.appendChild(transcriptionsList);
             }
         } else {
-            fileList.innerHTML = `<li>No files found.</li>`;
+            fileList.innerHTML = `<li>${calendarLangDict[language].filesNotFound}</li>`;
         }
     } catch (error) {
         console.error("Error fetching files:", error);
-        fileList.innerHTML = `<li>Error fetching files. Please try again later.</li>`;
+        fileList.innerHTML = `<li>${calendarLangDict[language].fetchFilesError}</li>`;
     }
 }
 
@@ -80,7 +108,7 @@ async function listFiles() {
 async function viewFile() {
     const filename = document.getElementById("view-filename").value;
     if (!filename) {
-        alert("Please enter a file name");
+        alert(calendarLangDict[language].enterFileAlert);
         return;
     }
 
@@ -115,23 +143,23 @@ async function viewFile() {
 
 
 // Attach the viewFile function to the button
-document.getElementById("viewOneFileButton").addEventListener("click", viewFile);
+//document.getElementById("viewOneFileButton").addEventListener("click", viewFile);
 
 // Delete a file
 // Delete a file
 async function deleteFile() {
     const filename = document.getElementById("delete-filename").value;
     if (!filename) {
-        alert("Please enter a file name");
+        alert(calendarLangDict[language].enterFileAlert);
         return;
     }
     
     try {
         const response = await fetch(`${API_URL}/files/${filename}`, { method: "DELETE" });
         if (response.ok) {
-            document.getElementById("delete-message").textContent = "File deleted successfully.";
+            document.getElementById("delete-message").textContent = calendarLangDict[language].deletioSuccesfull;
         } else if (response.status === 404) {
-            document.getElementById("delete-message").textContent = "File not found.";
+            document.getElementById("delete-message").textContent = calendarLangDict[language].fileNotFound;
         } else {
             const errorData = await response.json().catch(() => ({ error: "Unknown error occurred." }));
             document.getElementById("delete-message").textContent = errorData.error || "An error occurred.";
@@ -139,7 +167,7 @@ async function deleteFile() {
         listFiles(); // Refresh file list
     } catch (error) {
         console.error("Error deleting file:", error);
-        document.getElementById("delete-message").textContent = "Failed to delete the file. Please try again.";
+        document.getElementById("delete-message").textContent = calendarLangDict[language].deletionFileError;
     }
 }
 
@@ -154,7 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (filename) {
                 deleteFile(filename); // Wywołanie funkcji usuwania z nazwą pliku
             } else {
-                displayMessage("Please enter a file name.", "error");
+                displayMessage(calendarLangDict[language].enterFileAlert, "error");
             }
         });
     } else {
@@ -212,6 +240,8 @@ function translatePage(lang) {
     document.getElementById("searchButton").textContent = translations.searchButton;
     document.getElementById("searchResult").textContent = translations.searchResult;
     document.getElementById("searchText").placeholder = translations.enterPhase;
+    document.getElementById("viewFiles").textContent = translations.viewFile
+    document.getElementById("viewOneFileButton").textContent = translations.viewFile
 }
 
 chrome.storage.local.get("settings", (result) => {
@@ -232,21 +262,21 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsDiv.style.display = 'none';
 
         if (!query) {
-            alert('Proszę wpisać frazę do wyszukania.');
+            alert(calendarLangDict[language].enterSearch);
             return;
         }
 
         try {
             const response = await fetch(`${API_URL}/search/${encodeURIComponent(query)}`);
             if (!response.ok) {
-                throw new Error('Błąd podczas komunikacji z serwerem.');
+                throw new Error(calendarLangDict[language].serwerCommunicationError);
             }
 
             const data = await response.json();
             const files = data.matching_files;
 
             if (files.length === 0) {
-                resultsList.innerHTML = '<li>Brak wyników.</li>';
+                resultsList.innerHTML = `<li>${calendarLangDict[language].noResults}</li>`;
             } else {
                 files.forEach(file => {
                     const li = document.createElement('li');
@@ -258,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsDiv.style.display = 'block';
         } catch (error) {
             console.error('Błąd:', error);
-            alert('Wystąpił błąd podczas wyszukiwania. Spróbuj ponownie.');
+            alert(calendarLangDict[language].again);
         }
     });
 });

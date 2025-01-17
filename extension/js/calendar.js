@@ -21,7 +21,8 @@ const calendarLangDict = {
             "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", 
             "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
         ],
-        back: "Powrót"
+        back: "Powrót",
+        errors: "Błędy:",
     },
     en: {
         title: "Calendar",
@@ -43,7 +44,8 @@ const calendarLangDict = {
             "January", "February", "March", "April", "May", "June", 
             "July", "August", "September", "October", "November", "December"
         ],
-        back:"Back"
+        back:"Back",
+        errors: "Errors:"
     }
 };
 
@@ -72,7 +74,7 @@ async function listMeetings(selectedDate) {
                 );
             });
         } else {
-            meetingsList.innerHTML = `<p>Wybierz datę</p>`;
+            meetingsList.innerHTML = `<p>${calendarLangDict[language].select_date}</p>`;
             filteredMeetings = [];
         }
 
@@ -115,7 +117,7 @@ async function listMeetings(selectedDate) {
             });
         } else {
             if (selectedDate){
-                meetingsList.innerHTML = `<p>Brak spotkań na wybraną datę.</p>`;
+                meetingsList.innerHTML = `<p>${calendarLangDict[language].no_meetings}</p>`;
             }
         }
     } catch (error) {
@@ -137,12 +139,12 @@ document.getElementById("addMeetingForm").addEventListener("submit", event => {
 
     // Sprawdzenie, czy data jest poprawna
     if (!date || new Date(date) < new Date().setHours(0, 0, 0, 0)) {
-        errors.push("Data musi być dzisiejsza lub przyszła.");
+        errors.push(calendarLangDict[language].error_past_date);
     }
 
     // Sprawdzenie czasu
     if (!startTime || !endTime || startTime >= endTime) {
-        errors.push("Godzina rozpoczęcia musi być wcześniejsza niż godzina zakończenia.");
+        errors.push(calendarLangDict[language].error_time);
     }
 
     // Sprawdzenie URL
@@ -154,7 +156,7 @@ document.getElementById("addMeetingForm").addEventListener("submit", event => {
 
     // Wyświetlenie błędów (jeśli istnieją)
     if (errors.length > 0) {
-        alert("Błędy:\n" + errors.join("\n"));
+        alert(`${calendarLangDict[language].errors} \n` + errors.join("\n"));
         return;
     }
     const newMeeting = { date, startTime, endTime, link };

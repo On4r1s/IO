@@ -29,7 +29,11 @@ const translations = {
             high: "High"
         },
         errorSavingSettings: "Error saving settings:",
-        settingSavedSuccesfully: "Setting Saved Succesfully"
+        settingSavedSuccesfully: "Setting Saved Succesfully",
+        serverSettingsError: "Failed to download settings from server, I'm using local settings.",
+        retriveSettingsError: "Error retrieving settings from the server",
+        chromeStorageLocalError: "No settings in chrome.storage.local",
+        fetchError: "Disk space fetch failed",
     },
     pl: {
         languageLabel: "Język:",
@@ -46,7 +50,11 @@ const translations = {
             high: "Wysoka"
         },
         errorSavingSettings: "Błąd podczas zapisywania ustawień:",
-        settingSavedSuccesfully:"Ustawienia zapisane pomyślnie."
+        settingSavedSuccesfully:"Ustawienia zapisane pomyślnie.",
+        serverSettingsError: "Nie udało się pobrać ustawień z serwera, używam lokalnych ustawień.",
+        retriveSettingsError: "Błąd podczas pobierania ustawień z serwera:",
+        chromeStorageLocalError: "Brak ustawień w chrome.storage.local",
+        fetchError: "Pobieranie miejsca na dysku nie powiodło się",
     }
 };
 
@@ -88,7 +96,7 @@ async function fetchDiskSpace() {
     try {
         const response = await fetch(`${API_URL}/disk-space`);
         if (!response.ok) {
-            throw new Error("Disk space fetch failed");
+            throw new Error(translations[settings.language].fetchError);
         }
         const data = await response.json();
         document.getElementById('diskSpaceInfo').textContent = 
@@ -201,10 +209,10 @@ async function fetchSettings() {
                 
             });
         } else {
-            throw new Error("Nie udało się pobrać ustawień z serwera, używam lokalnych ustawień.");
+            throw new Error(translations[settings.language].diskSpaceInfoLabel );//('${translations[settings.language].diskSpaceInfoLabel}' );
         }
     } catch (error) {
-        console.warn("Błąd podczas pobierania ustawień z serwera:", error);
+        console.warn(translations[settings.language].retriveSettingsError, error);
 
         // Pobierz ustawienia z chrome.storage.local
         data = await new Promise((resolve) => {
@@ -212,7 +220,7 @@ async function fetchSettings() {
                 if (result.settings) {
                     resolve(result.settings);
                 } else {
-                    console.error("Brak ustawień w chrome.storage.local");
+                    console.error(translations[settings.language].chromeStorageSocalError);
                     resolve(null);
                 }
             });
@@ -230,7 +238,7 @@ async function fetchSettings() {
 
     // Zaktualizuj interfejs użytkownika
     document.getElementById('recordingQuality').value = settings.recordingQuality;
-    document.getElementById('qualityLabel').textContent = `${settings.recordingQuality} GB`;
+    document.getElementById('qualityLabel').textContent = `${settings.recordingQuality}`;
 
     updateUI();
 }
@@ -253,5 +261,5 @@ document.addEventListener('DOMContentLoaded', function () {
     fetchDiskSpace(); // Pobierz dane o wolnym miejscu na dysku
 });
 updateUI()
-setInterval(fetchDiskSpace, 60000); // Odświeżaj co minutę
+//setInterval(fetchDiskSpace, 60000); // Odświeżaj co minutę
 
