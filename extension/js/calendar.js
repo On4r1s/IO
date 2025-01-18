@@ -151,7 +151,7 @@ document.getElementById("addMeetingForm").addEventListener("submit", event => {
     try {
         new URL(link); // Spróbuje utworzyć URL - jeśli jest niepoprawny, wyrzuci wyjątek
     } catch (_) {
-        errors.push("Podaj poprawny URL.");
+        errors.push(calendarLangDict[language].error_url);
     }
 
     // Wyświetlenie błędów (jeśli istnieją)

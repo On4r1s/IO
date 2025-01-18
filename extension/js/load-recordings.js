@@ -131,7 +131,12 @@ async function viewFile() {
         try {
             const response = await fetch(`${API_URL}/files/${filename}`);
             if (!response.ok) {
-                throw new Error("File not found or error occurred.");
+                if (response.status === 404) {
+                    fileContentsTextarea.value = "The requested file was not found. Please upload the file or try another name.";
+                    return;
+                } else {
+                    throw new Error("File not found or error occurred.");
+                }
             }
             const content = await response.text();
             fileContentsTextarea.value = content;

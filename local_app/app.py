@@ -23,10 +23,12 @@ meeting_file = os.path.join(data_path, 'meeting.json')
 translations = {
     "en": {
         "notEnoughDiskSpace": "Not enough disk space.",
+        "wasNotFound": "was not found",
          
     },
     "pl": {
-        "notEnoughDiskSpace": "Brak wystarczającego miejsca na dysku"
+        "notEnoughDiskSpace": "Brak wystarczającego miejsca na dysku",
+        "wasNotFound": "nie został znaleziony",
     }
 }
          
@@ -150,15 +152,25 @@ def get_files():
 @app.get('/files/<file>')
 def show_file(file):
 
+    try:
+        with open(settings_file, "r") as f:
+            settings = json.load(f)
+            lang = settings.get("lang", "en")  # Domyślnie "en" jeśli brak klucza "lang"
+    except (FileNotFoundError, json.JSONDecodeError):
+        lang = "en"
+    
     if file.lower().endswith('.pdf'):
         file_path = os.path.join(data_path, 'transcripts', file)
         if not os.path.isfile(file_path):
-            return Response(status=404)
+            return f"'{file}' {translations.get(lang, {}).get('wasNotFound', 'was not found')}", 200
+
         return send_file(str(file_path), mimetype='application/pdf')
     else:
         file_path = os.path.join(data_path, 'notes', file)
+
         if not os.path.isfile(file_path):
-            return Response(status=404)
+            return f"'{file}' {translations.get(lang, {}).get('wasNotFound', 'was not found')}", 200
+
         return send_file(str(file_path))
 
 
