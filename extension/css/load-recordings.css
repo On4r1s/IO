@@ -166,3 +166,25 @@ button:hover {
     border-radius: 4px;
     border: 1px solid #dddddd;
 }
+
+#dedicatedViewFileButton {
+    background-color: #80bdff; /* Niebieski kolor tła */
+    color: #ffffff; /* Biały kolor tekstu */
+    border: none; /* Usuń domyślną obwódkę */
+    border-radius: 5px; /* Zaokrąglone rogi */
+    padding: 10px 15px; /* Wewnętrzne marginesy */
+    cursor: pointer; /* Zmień kursor na wskaźnik */
+    font-size: 14px; /* Rozmiar czcionki */
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Animacje */
+    margin:10px;
+}
+
+#dedicatedViewFileButton:hover {
+    background-color: #457bb5; /* Ciemniejszy odcień niebieskiego przy najechaniu */
+    transform: scale(1.05); /* Powiększenie przycisku */
+}
+
+#dedicatedViewFileButton:active {
+    background-color: #35587f; /* Jeszcze ciemniejszy odcień przy kliknięciu */
+    transform: scale(0.95); /* Lekko zmniejszony przycisk przy kliknięciu */
+}

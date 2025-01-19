@@ -28,6 +28,7 @@ const calendarLangDict = {
         filesNotFound: "Pliki nie zostały znalezione",
         notes: "Notatki",
         transcriptions: "Transkrypcje:",
+        viewFileButton: "Obejrzyj",
     },
     en: {
         title: "File Management",
@@ -56,11 +57,12 @@ const calendarLangDict = {
         filesNotFound: "Files not found.",
         notes: "Notes:",
         transcriptions: "Transcriptions:",
+        viewFileButton: "View",
     }
 };
 async function listFiles() {
     const fileList = document.getElementById("file-list");
-    //fileList.innerHTML = `<li>Loading files...</li>`;
+    // fileList.innerHTML = `<li>Loading files...</li>`;
     try {
         const response = await fetch(`${API_URL}/files`);
         const data = await response.json();
@@ -76,6 +78,14 @@ async function listFiles() {
                 data.notes.forEach(file => {
                     const li = document.createElement("li");
                     li.textContent = file;
+
+                    // Dodaj przycisk dla każdego pliku
+                    const button = document.createElement("button");
+                    button.id = "dedicatedViewFileButton";
+                    button.textContent = calendarLangDict[language].viewFileButton || "View";
+                    button.addEventListener("click", () => viewFile(file)); // Wywołaj viewFile z argumentem
+                    li.appendChild(button);
+
                     notesList.appendChild(li);
                 });
                 fileList.appendChild(notesList);
@@ -90,6 +100,14 @@ async function listFiles() {
                 data.transcriptions.forEach(file => {
                     const li = document.createElement("li");
                     li.textContent = file;
+
+                    // Dodaj przycisk dla każdego pliku
+                    const button = document.createElement("button");
+                    button.id = "dedicatedViewFileButton";
+                    button.textContent = calendarLangDict[language].viewFileButton || "View";
+                    button.addEventListener("click", () => viewFile(file)); // Wywołaj viewFile z argumentem
+                    li.appendChild(button);
+
                     transcriptionsList.appendChild(li);
                 });
                 fileList.appendChild(transcriptionsList);
@@ -105,8 +123,13 @@ async function listFiles() {
 
 
 
-async function viewFile() {
-    const filename = document.getElementById("view-filename").value;
+async function viewFile(filenameargument = null) {
+    let filename;
+    if (filenameargument !== null) {
+        filename = filenameargument;
+    } else {
+        filename = document.getElementById("view-filename").value;
+    }
     if (!filename) {
         alert(calendarLangDict[language].enterFileAlert);
         return;
@@ -297,3 +320,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+listFiles();
