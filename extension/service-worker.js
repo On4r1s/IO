@@ -167,11 +167,14 @@ async function recording(action) {
 }
 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-    if(message.action === "monitorMeetings") {
-        return;
-    }
     if (message === 'change') {
         await getSettings()
+    } else if (message.action === "captureScreen") {
+        await GMBS(sender, sendResponse)
+    } else if (message.action === "monitorMeetings") {
+        console.log("Received request to monitor meetings");
+        monitorMeetings();
+        sendResponse({ status: "success" });
     } else {
         chrome.storage.local.get(['recording_status'], async (result) => {
             if (result.recording_status !== message) {
@@ -180,6 +183,50 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         })
     }
 })
+
+async function GMBS(sender, sendResponse) {
+    chrome.tabCapture.getMediaStreamId({targetTabId: sender.tab.id},
+        async (streamId) => {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    mandatory: {
+                        chromeMediaSource: "tab",
+                        chromeMediaSourceId: streamId,
+                    },
+                },
+            })
+            await sendResponse({success: true})
+            const video = document.createElement('video')
+            video.srcObject = stream
+            await video.play()
+
+            video.onloadedmetadata = async () => {
+                const canvas = document.createElement('canvas')
+                canvas.width = video.videoWidth
+                canvas.height = video.videoHeight
+
+                const ctx = canvas.getContext('2d')
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+                try {
+                    const request = await fetch("http://127.0.0.1:5000/image", {
+                        method: "POST",
+                        body: JSON.stringify({image: canvas.toDataURL('image/png')})
+                })
+                if (!request.ok) {
+                    chrome.storage.local.get(['recording_settings'], (result) => {
+                        dict = langDict[result.recording_settings.lang]
+                        const text = `${dict['error_img']}(${request.status})`
+
+                        chrome.storage.local.set({recording_text: text})
+                    })
+                }
+            } catch (e) {
+                console.error(e)
+            }
+        }
+    })
+}
 
 getSettings()
 
@@ -360,11 +407,3 @@ async function monitorMeetings() {
 }
 
 monitorMeetings();
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === "monitorMeetings") {
-        console.log("Received request to monitor meetings");
-        monitorMeetings();
-        sendResponse({ status: "success" });
-    }
-});

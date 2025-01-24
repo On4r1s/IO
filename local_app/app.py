@@ -15,7 +15,6 @@ global prev_img
 global time_start
 global active_stamp
 
-
 data_path = "../data/"
 settings_file = os.path.join(data_path, 'settings.json')
 meeting_file = os.path.join(data_path, 'meeting.json')
@@ -24,14 +23,15 @@ translations = {
     "en": {
         "notEnoughDiskSpace": "Not enough disk space.",
         "wasNotFound": "was not found",
-         
+
     },
     "pl": {
         "notEnoughDiskSpace": "Brak wystarczającego miejsca na dysku",
         "wasNotFound": "nie został znaleziony",
     }
 }
-         
+
+
 @app.post('/recording')
 def recording():
     global active_pipe
@@ -62,6 +62,8 @@ def recording():
             stamp = active_stamp
             active_stamp = None
             return Response(response=stamp, status=200)
+        else:
+            return Response(status=400)
     except Exception:
         try:
             end_recording(active_pipe)  # double start ?
@@ -76,12 +78,12 @@ def recording():
 
 @app.post('/analyze')
 def analyze():
-    try:
+    #try:
         transcribe(flask.request.headers.get('stamp'))
         return Response(status=200)
-    except Exception as e:
-        print(e)
-        return Response(status=400)
+    #except Exception as e:
+    #    print(e)
+    #    return Response(status=400)
 
 
 @app.post('/image')
@@ -151,14 +153,13 @@ def get_files():
 
 @app.get('/files/<file>')
 def show_file(file):
-
     try:
         with open(settings_file, "r") as f:
             settings = json.load(f)
             lang = settings.get("lang", "en")  # Domyślnie "en" jeśli brak klucza "lang"
     except (FileNotFoundError, json.JSONDecodeError):
         lang = "en"
-    
+
     if file.lower().endswith('.pdf'):
         file_path = os.path.join(data_path, 'transcripts', file)
         if not os.path.isfile(file_path):
@@ -181,10 +182,10 @@ def delete_file(file):
         file_path = os.path.join(data_path, 'transcripts', file)
     else:
         file_path = os.path.join(data_path, 'notes', file)
-    
+
     if not os.path.isfile(file_path):
         return jsonify({"error": "File not found"}), 404
-    
+
     try:
         os.remove(file_path)
         return jsonify({"message": "File deleted successfully"}), 200
@@ -206,6 +207,7 @@ def send_settings():
         print(e)
         return Response(status=500)
 
+
 @app.post('/settings')
 def change_settings():
     global settings
@@ -213,19 +215,18 @@ def change_settings():
         free = disk_usage("/")[2] / 1073741824  # Wolne miejsce na dysku (GB)
         used = sum(f.stat().st_size for f in Path(data_path).glob('**/*') if f.is_file()) / 1073741824
 
-
-                # Pobranie danych z żądania
+        # Pobranie danych z żądania
         if not flask.request.is_json:
             return Response("Invalid JSON", status=400)
-        
+
         to_write = flask.request.get_json(force=True)
         max_space = int(to_write.get('max_space', 0))
-        
+
         # Sprawdź, czy wartość max_space jest poprawna
         if max_space > free + used:
             lang = to_write.get('lang', 'en')
             return Response(translations[lang]["notEnoughDiskSpace"], status=400)
-        
+
         # Zapisz dane do pliku JSON
         os.makedirs(data_path, exist_ok=True)
         with open(settings_file, "w") as f:
@@ -235,21 +236,23 @@ def change_settings():
     except Exception as e:
         print(e)
         return Response(status=500)
-    
+
+
 @app.route('/disk-space', methods=['GET'])
 def get_disk_space():
     try:
-        free = disk_usage("/")[2]   # Wolne miejsce na dysku (GB)
+        free = disk_usage("/")[2]  # Wolne miejsce na dysku (GB)
         used = sum(f.stat().st_size for f in Path(data_path).glob('**/*') if f.is_file())
-        total= disk_usage("/")[1] 
+        total = disk_usage("/")[1]
         return jsonify({
-            "total": total // (1024**3),  # Całkowite miejsce (GB)
-            "used": used // (1024**3),    # Użyte miejsce (GB)
-            "free": free // (1024**3)     # Wolne miejsce (GB)
+            "total": total // (1024 ** 3),  # Całkowite miejsce (GB)
+            "used": used // (1024 ** 3),  # Użyte miejsce (GB)
+            "free": free // (1024 ** 3)  # Wolne miejsce (GB)
         })
     except Exception as e:
         print(e)
         return Response("Error retrieving disk space", status=500)
+
 
 @app.get('/meetings')
 def view_meetings():
@@ -372,7 +375,6 @@ def delete_meeting(meeting_id):
 
 @app.route('/search/<search_text>', methods=['GET'])
 def search_in_all_files(search_text):
-
     matching_files = []
     notes_path = os.path.join(data_path, 'notes')
     transcriptions_path = os.path.join(data_path, 'transcripts')

@@ -2,6 +2,7 @@ import os
 from fpdf import FPDF
 from PIL import Image
 
+
 def add_image_to_pdf(pdf, img_path, current_x, current_y, max_y, y_margin):
     img = Image.open(img_path)
     img_width = 150
@@ -14,13 +15,17 @@ def add_image_to_pdf(pdf, img_path, current_x, current_y, max_y, y_margin):
     current_y += img_height + 10
     return current_y
 
-async def create_pdf(transcripts, data_path, photos):
+
+def create_pdf(transcripts, data_path, photos, stamp):
     screenshots_folder = os.path.join(data_path, '.temp\\imgs')
     output_folder = os.path.join(data_path, 'transcripts')
-    output_pdf = f"{list(photos.keys())[0]}.pdf"
+    output_pdf = f"{stamp}.pdf"
 
     #list of images
-    image_paths = [os.path.join(screenshots_folder, f"{name}.png") for name in list(photos.values())[0]]
+    try:
+        image_paths = [os.path.join(screenshots_folder, f"{name}.png") for name in list(photos.values())[0]]
+    except IndexError:
+        image_paths = []
 
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -49,4 +54,3 @@ async def create_pdf(transcripts, data_path, photos):
         current_y = add_image_to_pdf(pdf, image_paths[j], current_x, current_y, max_y, y_margin)
 
     pdf.output(os.path.join(output_folder, output_pdf))
-    print("PDF created successfully.")

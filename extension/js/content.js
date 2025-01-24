@@ -6,9 +6,10 @@ const langDict = {
         "error_img": "Error while sending img",
     }
 }
-// works only for YouTube now
+
 const paths = {
-    'https://www.youtube.com': "/html/body/ytd-app/div[1]/ytd-page-manager/ytd-watch-flexy/div[5]/div[1]/div/div[1]/div[2]/div/div/ytd-player/div/div/div[1]/video"
+    'https://www.youtube.com': "/html/body/ytd-app/div[1]/ytd-page-manager/ytd-watch-flexy/div[5]/div[1]/div/div[1]/div[2]/div/div/ytd-player/div/div/div[1]/video",
+    'https://meet.google.com': "/html/body/div[1]/c-wiz/div/div/div[35]/div[4]/div[2]/main/div[1]/div/div[2]/div[3]/div/div",
 }
 
 function getElementByXpath(path) {
@@ -67,17 +68,21 @@ async function sendPicture(image) {
     }
 }
 
+
 // getting image from element appearance on canvas
 let canvas = document.createElement("canvas")
+
+const whereami = trimLocation("no-path")
 async function screen() {
-    let video = await waitUntil(paths[trimLocation("no-path")])
-    canvas.width = parseInt(video.style.width)
-    canvas.height = parseInt(video.style.height)
+    let video = await waitUntil(paths[whereami])
+    canvas.width = parseInt(document.defaultView.getComputedStyle(video).width)
+    canvas.height = parseInt(document.defaultView.getComputedStyle(video).height)
     canvas
         .getContext("2d")
         .drawImage(video, 0, 0, canvas.width, canvas.height)
 
     await sendPicture(canvas.toDataURL("image/png"))
+
 }
 
 let interval
@@ -85,9 +90,18 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'local') {
         for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
             if (key === 'recording_status' && newValue === 'start') {
-                interval = setInterval(async () => { // sending image each n milliseconds
-                    await screen()
-                }, 2000)
+                if (whereami === 'https://meet.google.com') {
+                    interval = setInterval( () => {}, 10000000)
+                    chrome.runtime.sendMessage({ action: "captureScreen" }, (response) => {
+                        if (!response.success) {
+                            console.error(response)
+                        }
+                    })
+                } else {
+                    interval = setInterval(async () => { // sending image each n milliseconds
+                        await screen()
+                    }, 2000)
+                }
             }
             else if (key === 'recording_status' && newValue === 'stop') {
                 clearInterval(interval)
@@ -180,62 +194,10 @@ function scheduleRecording(meeting) {
 }
 
 
-
 // Przykład odczytu spotkań i harmonogramowania
 chrome.storage.local.get(['meetings'], ({ meetings }) => {
     if (meetings) {
         const nextMeeting = findNextMeeting(meetings);
         scheduleRecording(nextMeeting);
     }
-});
-
-async function findNextMeeting(url) {
-    try {
-        // Pobranie danych JSON z zewnętrznego źródła (np. pliku lub API)
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const meetings = await response.json();
-
-        const now = new Date();
-
-        // Przekształcamy dane spotkań na obiekty z datami
-        const parsedMeetings = meetings.map(meeting => ({
-            ...meeting,
-            startDateTime: new Date(`${meeting.date}T${meeting.startTime}`)
-        }));
-
-        // Filtrujemy przyszłe spotkania
-        const futureMeetings = parsedMeetings.filter(meeting => meeting.startDateTime > now);
-
-        // Sortujemy je po czasie rozpoczęcia
-        futureMeetings.sort((a, b) => a.startDateTime - b.startDateTime);
-
-        // Zwracamy najbliższe spotkanie lub null, jeśli brak
-        return futureMeetings[0] || null;
-    } catch (error) {
-        console.error("Error fetching or processing meetings:", error);
-        return null;
-    }
-}
-
-// let lastHandledMeetingId = null; // Zmienna do przechowywania ID ostatniego spotkania
-//
-// (async () => {
-//     const url = 'http://127.0.0.1:5000/meetings'; // URL do pliku JSON lub API
-//     const nextMeeting = await findNextMeeting(url);
-//     //chrome.storage.local.set({ recording_status: 'stop' });
-//     if (nextMeeting) {
-//         console.log("Najbliższe spotkanie:", nextMeeting);
-//
-//         // Sprawdź, czy to spotkanie nie zostało już obsłużone
-//         if (lastHandledMeetingId !== nextMeeting.id) {
-//             lastHandledMeetingId = nextMeeting.id; // Zaktualizuj obsłużone spotkanie
-//             scheduleRecording(nextMeeting);
-//         } else {
-//             console.log("To spotkanie już zostało obsłużone.");
-//         }
-//     } else {
-//         console.log("Brak przyszłych spotkań.");
-//     }
-// })();
-
+})

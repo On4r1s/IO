@@ -8,8 +8,8 @@ import numpy as np
 from skimage.metrics import structural_similarity as ssim
 from pydub import AudioSegment
 from PyPDF2 import PdfReader
-import asyncio
 from pdfMake import create_pdf
+from Transcribe import transcribe_audio
 
 from PIL import Image
 from requests import request
@@ -44,12 +44,15 @@ def img_name(stamp):
 
 def delete_files(stamp):
     global photos_stamps
-    for photo in photos_stamps[stamp]:
-        os.remove(data_path + '.temp\\imgs\\' + photo + '.png')
+    try:
+        for photo in photos_stamps[stamp]:
+            os.remove(data_path + '.temp\\imgs\\' + photo + '.png')
+            del photos_stamps[stamp]
+    except KeyError:
+        pass
     os.remove(data_path + f'.temp\\audio\\input{stamp}.wav')
     os.remove(data_path + f'.temp\\audio\\output{stamp}.wav')
     os.remove(data_path + f'.temp\\audio\\combined{stamp}.wav')
-    del photos_stamps[stamp]
     return
 
 
@@ -72,34 +75,30 @@ def end_recording(pipe):
 
 
 def transcribe(stamp):
-    try:
-        to_send = str(photos_stamps[stamp]).replace('"', "'").replace(" ", "")
-    except KeyError:
-        to_send = []
 
-    output = AudioSegment.from_wav(f'{data_path}.temp/audio/output{stamp}.wav')
-    input = AudioSegment.from_wav(f'{data_path}.temp/audio/input{stamp}.wav')
+    output_stream = AudioSegment.from_wav(f'{data_path}.temp/audio/output{stamp}.wav')
+    input_stream = AudioSegment.from_wav(f'{data_path}.temp/audio/input{stamp}.wav')
 
-    if output.duration_seconds > input.duration_seconds:
-        combined = output.overlay(input)
+    if output_stream.duration_seconds > input_stream.duration_seconds:
+        combined = output_stream.overlay(input_stream)
     else:
-        combined = input.overlay(output)
-    combined = combined.set_frame_rate(16000)
+        combined = input_stream.overlay(output_stream)
 
-    combined.export(f'{data_path}.temp/audio/combined{stamp}.wav', format='wav')
+    file_name = f'{data_path}.temp/audio/combined{stamp}.wav'
+    combined.export(file_name, format='wav')
 
-    p = Popen(f"python Transcribe.py combined {stamp} {settings['lang']} {to_send}",
-              stdin=PIPE, stdout=PIPE, shell=True)
-
-    transcribed = [elem.replace('\r\n\x1b[0', '') for elem in
-                   str(str(p.stdout.read().decode('utf-8')).split("_"))]
+    try:
+        transcribed = transcribe_audio(file_name, stamp, settings['lang'], photos_stamps[stamp])
+    except KeyError:
+        transcribed = transcribe_audio(file_name, stamp, settings['lang'], [])
 
     print(transcribed)
 
-    # gpt_request(transcribed_out, stamp)
-
-    asyncio.run(create_pdf(transcribed, data_path, photos_stamps))
-    delete_files(stamp)
+    # gpt_request(transcribed, stamp)
+    print(photos_stamps)
+    print(stamp)
+    create_pdf(transcribed, data_path, photos_stamps, stamp)
+    #delete_files(stamp)
 
     return
 

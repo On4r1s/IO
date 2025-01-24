@@ -18,7 +18,7 @@ const langDict = {
         "bad_tab": "I don't support this tab",
     }
 }
-const possiblePages = ['https://www.youtube.com']
+const possiblePages = ['https://www.youtube.com', 'https://meet.google.com']
 
 let interval
 let seconds
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 text.addEventListener('click', async () => {
                     await chrome.runtime.sendMessage('change')
-                    location.reload()
+                    whereami.reload()
                 })
             }
         } else {
