@@ -75,7 +75,6 @@ def end_recording(pipe):
 
 
 def transcribe(stamp):
-
     output_stream = AudioSegment.from_wav(f'{data_path}.temp/audio/output{stamp}.wav')
     input_stream = AudioSegment.from_wav(f'{data_path}.temp/audio/input{stamp}.wav')
 
@@ -88,16 +87,16 @@ def transcribe(stamp):
     combined.export(file_name, format='wav')
 
     try:
-        transcribed = transcribe_audio(file_name, stamp, settings['lang'], photos_stamps[stamp])
+        stamps = photos_stamps[stamp]
+        transcribed = transcribe_audio(file_name, stamp, settings['lang'], stamps)
     except KeyError:
         transcribed = transcribe_audio(file_name, stamp, settings['lang'], [])
 
     print(transcribed)
 
     # gpt_request(transcribed, stamp)
-    print(photos_stamps)
-    print(stamp)
     create_pdf(transcribed, data_path, photos_stamps, stamp)
+
     #delete_files(stamp)
 
     return

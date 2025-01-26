@@ -18,7 +18,7 @@ const langDict = {
         "bad_tab": "I don't support this tab",
     }
 }
-const possiblePages = ['https://www.youtube.com', 'https://meet.google.com']
+const possiblePages = ['https://app.zoom.us', 'https://meet.google.com', 'https://teams.microsoft.com']
 
 let interval
 let seconds

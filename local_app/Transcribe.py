@@ -9,8 +9,10 @@ data_path = path.join(path.dirname(__file__)[:-10], 'data\\')
 
 
 def transcribe_audio(file, stamp, lang, photos):
-    for i in range(len(photos)):
-        photos[i] = datetime.strptime(photos[i], '%Y%m%d-%H%M%S%f')
+    stamps = []
+    for photo in photos:
+        stamps.append(datetime.strptime(photo, '%Y%m%d-%H%M%S%f'))
+
 
     wf = wave.open(file, "rb")
 
@@ -28,8 +30,8 @@ def transcribe_audio(file, stamp, lang, photos):
 
     n = 0
     while True:
-        if len(photos) != 0 and n < len(photos):
-            m = math.ceil((photos[n] - stamp).microseconds / 1000000) * wf.getframerate()
+        if len(stamps) != 0 and n < len(stamps):
+            m = math.ceil((stamps[n] - stamp).microseconds / 1000000) * wf.getframerate()
             n += 1
         else:
             m = wf.getnframes()
@@ -46,7 +48,7 @@ def transcribe_audio(file, stamp, lang, photos):
     frags.append(eval(rec.FinalResult())['text'])
 
     diff_text = []
-    if len(photos) != 0:
+    if len(stamps) != 0:
         for i in range(len(frags) - 1):
             diff_text.append(frags[i + 1][len(frags[i]):len(frags[i + 1])])
     else:

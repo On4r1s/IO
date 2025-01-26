@@ -46,7 +46,7 @@ def recording():
             delete_files(active_stamp)
             active_pipe = None
             active_stamp = None
-            prev_img = None
+            prev_img = b''
             return 'nah', 200
     except (NameError, TypeError):
         time_start = datetime.datetime.now()
@@ -70,7 +70,7 @@ def recording():
             active_pipe = None
             active_stamp = None
             time_start = None
-            prev_img = None
+            prev_img = b''
         except Exception as e:
             print(e)
         return Response(status=400)
@@ -78,12 +78,12 @@ def recording():
 
 @app.post('/analyze')
 def analyze():
-    #try:
+    try:
         transcribe(flask.request.headers.get('stamp'))
         return Response(status=200)
-    #except Exception as e:
-    #    print(e)
-    #    return Response(status=400)
+    except Exception as e:
+        print(e)
+        return Response(status=400)
 
 
 @app.post('/image')
@@ -117,6 +117,7 @@ def image():
 
     except Exception as e:
         print(e)
+        prev_img = b''
         return Response(status=400)
     return Response(status=200)
 

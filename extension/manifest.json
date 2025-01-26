@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "EXT_TEST",
-  "version": "0.1",
-  "description": "Some bs atm",
+  "name": "EXTENSION_NOTES",
+  "version": "0.5",
+  "description": "beta",
   "action": {
     "default_popup": "html/popup.html",
     "default_title": "Show settings"
@@ -15,7 +15,7 @@
     "tabCapture",
     "desktopCapture"
   ],
-  "host_permissions": ["*://*/*"],
+  "host_permissions": ["<all_urls>"],
   "icons": {
     "16": "images/icon-16.png",
     "32": "images/icon-32.png",
@@ -27,7 +27,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.youtube.com/*", "*://meet.google.com/*"],
+      "matches": ["*://app.zoom.us/*", "*://meet.google.com/*", "*://teams.microsoft.com/v2/*"],
       "js": ["js/content.js"]
     }
   ]

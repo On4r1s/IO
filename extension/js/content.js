@@ -7,9 +7,12 @@ const langDict = {
     }
 }
 
+const browserChromeHeight = window.outerHeight - window.innerHeight
+
 const paths = {
-    'https://www.youtube.com': "/html/body/ytd-app/div[1]/ytd-page-manager/ytd-watch-flexy/div[5]/div[1]/div/div[1]/div[2]/div/div/ytd-player/div/div/div[1]/video",
-    'https://meet.google.com': "/html/body/div[1]/c-wiz/div/div/div[35]/div[4]/div[2]/main/div[1]/div/div[2]/div[3]/div/div",
+    'https://meet.google.com': "/html/body/div[1]/c-wiz/div/div/div[35]/div[4]/div[2]/main/div[1]/div/div[1]/div/div[2]/div/video",
+    'https://teams.microsoft.com': "/html/body/div[1]/div/div/div/div[7]/div/div/div/div[2]/div/div[1]/div/div[2]/div[2]/div/div/div[1]/div/div/div/div/div/div/div[1]/div/div/video",
+    'https://app.zoom.us': "/html/body/div[3]/div[2]/div/div[2]/div/div[1]/div[1]/div[5]/div/div[1]"
 }
 
 function getElementByXpath(path) {
@@ -17,15 +20,17 @@ function getElementByXpath(path) {
 }
 
 // wait until element loads
-async function waitUntil(path) {
+async function waitUntil(path, z) {
     return await new Promise(resolve => {
         const interval = setInterval(() => {
-            let elem = getElementByXpath(path)
+            let elem
+            if (z) elem = document.getElementById('video-share-layout')
+            else elem = getElementByXpath(path)
             if (elem != null) {
                 resolve(elem)
                 clearInterval(interval)
             }
-        }, 1000);
+        }, 500);
     })
 }
 
@@ -73,39 +78,72 @@ async function sendPicture(image) {
 let canvas = document.createElement("canvas")
 
 const whereami = trimLocation("no-path")
-async function screen() {
-    let video = await waitUntil(paths[whereami])
-    canvas.width = parseInt(document.defaultView.getComputedStyle(video).width)
-    canvas.height = parseInt(document.defaultView.getComputedStyle(video).height)
+async function screen(video, w, h, sx, sy) {
+    canvas.width = w
+    canvas.height = h
     canvas
         .getContext("2d")
-        .drawImage(video, 0, 0, canvas.width, canvas.height)
-
-    await sendPicture(canvas.toDataURL("image/png"))
-
+        .drawImage(video, sx, sy, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height)
+    const pic = canvas.toDataURL("image/png")
+    await sendPicture(pic)
 }
 
 let interval
-chrome.storage.onChanged.addListener((changes, areaName) => {
+chrome.storage.onChanged.addListener(async (changes, areaName) => {
     if (areaName === 'local') {
-        for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
+        for (let [key, {oldValue, newValue}] of Object.entries(changes)) {
             if (key === 'recording_status' && newValue === 'start') {
-                if (whereami === 'https://meet.google.com') {
-                    interval = setInterval( () => {}, 10000000)
-                    chrome.runtime.sendMessage({ action: "captureScreen" }, (response) => {
-                        if (!response.success) {
-                            console.error(response)
-                        }
+                    chrome.runtime.sendMessage({action: "getId"}, async () => {
+                        chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+                            if (message.action === "screenCaptured") {
+                                const streamId = message.streamId
+                                const stream = await navigator.mediaDevices.getUserMedia(
+                                    {
+                                        audio: false,
+                                        video: {
+                                            mandatory: {
+                                                chromeMediaSource: "desktop",
+                                                chromeMediaSourceId: streamId,
+                                            },
+                                        },
+                                    })
+                                const video = document.createElement('video')
+                                video.srcObject = stream
+                                video.autoplay = true
+                                document.body.appendChild(video)
+                                console.log(whereami)
+                                console.log(paths[whereami])
+                                let elem
+                                if (whereami !== 'https://app.zoom.us') {
+                                    elem = await waitUntil(paths[whereami], false)
+                                } else {
+                                    elem = await waitUntil('video-share-layout', true)
+                                    //elem = document.getElementById('video-share-layout')
+                                }
+
+                                console.log(2)
+                                interval = setInterval(async () => { // sending image each n milliseconds
+                                    let rect = elem.getBoundingClientRect()
+                                    video.style.width = String(rect.width)
+                                    video.style.height = String(rect.height)
+
+                                    if (whereami === 'https://meet.google.com') {
+                                        await screen(video, rect.width+272, rect.height+150, rect.x+3, rect.y + browserChromeHeight+45)
+                                    } else if (whereami === 'https://teams.microsoft.com') {
+                                        await screen(video, rect.width+240, rect.height+165, rect.x+50, rect.y + browserChromeHeight+50)
+                                    } else if (whereami === 'https://app.zoom.us') {
+                                    await screen(video, rect.width+240, rect.height+165, rect.x+50, rect.y + browserChromeHeight+50)
+                                }
+                                }, 2000)
+
+                            }
+
+                        })
                     })
-                } else {
-                    interval = setInterval(async () => { // sending image each n milliseconds
-                        await screen()
-                    }, 2000)
-                }
-            }
-            else if (key === 'recording_status' && newValue === 'stop') {
+            } else if (key === 'recording_status' && newValue === 'stop') {
                 clearInterval(interval)
             }
+
         }
     }
 })
