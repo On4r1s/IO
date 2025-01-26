@@ -12,7 +12,7 @@ const browserChromeHeight = window.outerHeight - window.innerHeight
 const paths = {
     'https://meet.google.com': "/html/body/div[1]/c-wiz/div/div/div[35]/div[4]/div[2]/main/div[1]/div/div[1]/div/div[2]/div/video",
     'https://teams.microsoft.com': "/html/body/div[1]/div/div/div/div[7]/div/div/div/div[2]/div/div[1]/div/div[2]/div[2]/div/div/div[1]/div/div/div/div/div/div/div[1]/div/div/video",
-    'https://app.zoom.us': "/html/body/div[3]/div[2]/div/div[2]/div/div[1]/div[1]/div[5]/div/div[1]"
+    'https://app.zoom.us': "/html/body/div[3]/div[2]/div/div[2]/div/div[1]/div[1]/div[5]/div/div[1]/div/div/div"
 }
 
 function getElementByXpath(path) {
@@ -24,7 +24,10 @@ async function waitUntil(path, z) {
     return await new Promise(resolve => {
         const interval = setInterval(() => {
             let elem
-            if (z) elem = document.getElementById('video-share-layout')
+            if (z) {
+                const iframe = document.getElementById('webclient').contentWindow.document
+                elem = iframe.getElementById('video-share-layout')
+            }
             else elem = getElementByXpath(path)
             if (elem != null) {
                 resolve(elem)
@@ -88,6 +91,14 @@ async function screen(video, w, h, sx, sy) {
     await sendPicture(pic)
 }
 
+let stream
+function stopScreencast() {
+    if (stream) {
+        stream.getTracks().forEach((track) => track.stop())
+        stream = null
+    }
+}
+
 let interval
 chrome.storage.onChanged.addListener(async (changes, areaName) => {
     if (areaName === 'local') {
@@ -97,7 +108,7 @@ chrome.storage.onChanged.addListener(async (changes, areaName) => {
                         chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                             if (message.action === "screenCaptured") {
                                 const streamId = message.streamId
-                                const stream = await navigator.mediaDevices.getUserMedia(
+                                stream = await navigator.mediaDevices.getUserMedia(
                                     {
                                         audio: false,
                                         video: {
@@ -111,17 +122,12 @@ chrome.storage.onChanged.addListener(async (changes, areaName) => {
                                 video.srcObject = stream
                                 video.autoplay = true
                                 document.body.appendChild(video)
-                                console.log(whereami)
-                                console.log(paths[whereami])
                                 let elem
-                                if (whereami !== 'https://app.zoom.us') {
-                                    elem = await waitUntil(paths[whereami], false)
+                                if (whereami === 'https://app.zoom.us') {
+                                    elem = await waitUntil(paths[whereami], true)
                                 } else {
-                                    elem = await waitUntil('video-share-layout', true)
-                                    //elem = document.getElementById('video-share-layout')
+                                    elem = await waitUntil(paths[whereami], false)
                                 }
-
-                                console.log(2)
                                 interval = setInterval(async () => { // sending image each n milliseconds
                                     let rect = elem.getBoundingClientRect()
                                     video.style.width = String(rect.width)
@@ -132,7 +138,7 @@ chrome.storage.onChanged.addListener(async (changes, areaName) => {
                                     } else if (whereami === 'https://teams.microsoft.com') {
                                         await screen(video, rect.width+240, rect.height+165, rect.x+50, rect.y + browserChromeHeight+50)
                                     } else if (whereami === 'https://app.zoom.us') {
-                                    await screen(video, rect.width+240, rect.height+165, rect.x+50, rect.y + browserChromeHeight+50)
+                                    await screen(video, rect.width-195, rect.height+31, rect.x+290, rect.y + browserChromeHeight+180)
                                 }
                                 }, 2000)
 
@@ -142,6 +148,7 @@ chrome.storage.onChanged.addListener(async (changes, areaName) => {
                     })
             } else if (key === 'recording_status' && newValue === 'stop') {
                 clearInterval(interval)
+                stopScreencast()
             }
 
         }
