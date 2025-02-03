@@ -17,7 +17,8 @@ def main():
 
     Model(lang="en-us")
     Model(lang="pl")
-    print('Done!')
+
+    return 1
 
 
 if __name__ == "__main__":
