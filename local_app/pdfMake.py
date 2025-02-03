@@ -29,7 +29,8 @@ def create_pdf(transcripts, data_path, photos, stamp):
 
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.set_font("Arial", size=12)
+    pdf.add_font('DejaVu', '', 'DejaVuSansCondensed.ttf', uni=True)
+    pdf.set_font("DejaVu", size=12)
     pdf.add_page()
 
     x_margin = 10

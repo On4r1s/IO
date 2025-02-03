@@ -97,7 +97,7 @@ def transcribe(stamp):
     # gpt_request(transcribed, stamp)
     create_pdf(transcribed, data_path, photos_stamps, stamp)
 
-    #delete_files(stamp)
+    delete_files(stamp)
 
     return
 
