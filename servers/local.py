@@ -24,7 +24,7 @@ def deepseek():
                   f"dont use markdown for style:\n{post_json['transcription']}")
     else:
         prompt = ('Daj mi notatkę z tego transkrybowanego tekstu, nie pisz nic poza tą notatką, nie używaj Markdowna '
-                  f'dla stylów:\n{post_json['transcription']}')
+                  f'dla stylów:\n{post_json["transcription"]}')
 
     response = ollama.chat(model='deepseek-r1', messages=[
         {
@@ -38,4 +38,4 @@ def deepseek():
 
 # must be param --port=8080 (or any other than 5000) when using on the same pc as local-app
 if __name__ == '__main__':
-    app.run()
+    app.run(port=8080)

@@ -403,4 +403,4 @@ def search_in_all_files(search_text):
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=5000)

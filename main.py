@@ -6,7 +6,7 @@ import time
 async def main(argv):
     print("Started, type anything to quit:", end=' ')
     app = await asyncio.create_subprocess_shell(
-        "local_app/app.py",
+        "local_app/app.py ",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE)
 
