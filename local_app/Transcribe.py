@@ -1,57 +1,51 @@
-import math
-from os import path
 import wave
 from datetime import datetime
 from vosk import Model, KaldiRecognizer, SetLogLevel
 
 SetLogLevel(-1)
-data_path = path.join(path.dirname(__file__)[:-10], 'data\\')
 
 
 def transcribe_audio(file, stamp, lang, photos):
-    stamps = []
-    for photo in photos:
-        stamps.append(datetime.strptime(photo, '%Y%m%d-%H%M%S%f'))
-
-
+    timestamps = [datetime.strptime(photo, '%Y%m%d-%H%M%S%f') for photo in photos]
     wf = wave.open(file, "rb")
 
-    if lang == "en":
-        model = Model(lang="en-us")
-    else:
-        model = Model(lang="pl")
+    model = Model(lang="en-us" if lang == "en" else "pl")
 
-    stamp = datetime.strptime(stamp, '%Y%m%d-%H%M%S%f')
+    start_stamp = datetime.strptime(stamp, '%Y%m%d-%H%M%S%f')
 
     rec = KaldiRecognizer(model, wf.getframerate())
     rec.SetWords(True)
-    rec.SetPartialWords(True)
-    frags = []
 
-    n = 0
-    while True:
-        if len(stamps) != 0 and n < len(stamps):
-            m = math.ceil((stamps[n] - stamp).microseconds / 1000000) * wf.getframerate()
-            n += 1
+    text_segments = []
+    full_text = ""
+    prev_stamp = start_stamp
+
+    for ts in timestamps:
+
+        if ts:
+            frame_count = int((ts - prev_stamp).total_seconds() * wf.getframerate())
         else:
-            m = wf.getnframes()
-
-        data = wf.readframes(m)
+            frame_count = wf.getnframes()
+        prev_stamp = ts
+        data = wf.readframes(frame_count)
         if len(data) == 0:
             break
-        rec.AcceptWaveform(data)
-        val = eval(rec.PartialResult())['partial']
-        try:
-            frags.index(val)
-        except ValueError:
-            frags.append(val)
-    frags.append(eval(rec.FinalResult())['text'])
 
-    diff_text = []
-    if len(stamps) != 0:
-        for i in range(len(frags) - 1):
-            diff_text.append(frags[i + 1][len(frags[i]):len(frags[i + 1])])
-    else:
-        diff_text = [frags[1]]
+        if rec.AcceptWaveform(data):
+            result = eval(rec.Result())["text"]
+        else:
+            result = eval(rec.PartialResult()).get("partial", "")
 
-    return diff_text
+        new_text = result[len(full_text):] if result.startswith(full_text) else result
+        if new_text.strip():
+            text_segments.append(new_text)
+            full_text = result
+
+    final_text = eval(rec.FinalResult()).get("text", "").strip()
+    new_text = final_text[len(full_text):] if final_text.startswith(full_text) else final_text
+    if new_text.strip():
+        text_segments.append(new_text)
+
+    cleaned_text = [" ".join(text.splitlines()).strip() for text in text_segments]
+
+    return cleaned_text

@@ -53,6 +53,7 @@ def delete_files(stamp):
     os.remove(data_path + f'.temp\\audio\\input{stamp}.wav')
     os.remove(data_path + f'.temp\\audio\\output{stamp}.wav')
     os.remove(data_path + f'.temp\\audio\\combined{stamp}.wav')
+    os.remove('processed_audio.wav')
     return
 
 
@@ -92,13 +93,10 @@ def transcribe(stamp):
     except KeyError:
         transcribed = transcribe_audio(file_name, stamp, settings['lang'], [])
 
-    print(transcribed)
-
     gpt_request(transcribed, stamp)
     create_pdf(transcribed, data_path, photos_stamps, stamp)
 
     delete_files(stamp)
-
     return
 
 

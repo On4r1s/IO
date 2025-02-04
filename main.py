@@ -1,40 +1,36 @@
 import asyncio
+import subprocess
 import sys
 import time
 
 
-async def main(argv):
+def main(argv):
     print("Started, type anything to quit:", end=' ')
-    app = await asyncio.create_subprocess_shell(
-        "local_app/app.py ",
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE)
+    app = subprocess.Popen(["python3.11", "local_app\\app.py"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE)
 
     try:
         if argv[1] == 'local':
-            server = await asyncio.create_subprocess_shell(
-                "servers/local.py",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE)
+            server = subprocess.Popen(["python3.11", "servers\\local.py"], stdin=subprocess.PIPE,
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         else:
             print('Wrong argument, exiting...')
-            await app.communicate()
+            app.communicate()
             exit(1)
 
     except IndexError:
-        server = await asyncio.create_subprocess_shell(
-            "servers/online.py",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE)
+        server = subprocess.Popen(["python3.11", "servers\\online.py"], stdin=subprocess.PIPE,
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     while not input():
-        time.sleep(3)
+        time.sleep(2)
 
-    await app.communicate()
-    await server.communicate()
+    app.kill()
+    server.kill()
 
     print('Exiting...')
     return 0
 
+
 if __name__ == '__main__':
-    asyncio.run(main(sys.argv))
+    main(sys.argv)
