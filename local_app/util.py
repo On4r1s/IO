@@ -52,8 +52,7 @@ def delete_files(stamp):
         pass
     os.remove(data_path + f'.temp\\audio\\input{stamp}.wav')
     os.remove(data_path + f'.temp\\audio\\output{stamp}.wav')
-    os.remove(data_path + f'.temp\\audio\\combined{stamp}.wav')
-    os.remove('processed_audio.wav')
+    #os.remove(data_path + f'.temp\\audio\\combined{stamp}.wav')
     return
 
 

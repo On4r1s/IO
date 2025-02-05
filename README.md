@@ -24,7 +24,8 @@ You don't have to do anything here, continue to the next step.
 1. Download .zip of this project, and unpack it (or clone the project)
 2. Unpack extension part into chrome
 ![image](https://github.com/user-attachments/assets/22483c6d-acab-4065-a103-cf8ac25c4734)
-3. Download python 3.11 or 3.12
-4. Run `python install.py` 
-5. Run `python main.py` (if you are using offline AI-server, then type `python main.py local`)
-6. Now you can successfully use IO-recorder in your Chrome browser
+3. Download python 3.11
+4. Run `python3.11 install.py`, now everything is ready for work
+5. Run `python3.11 .\local_app\app.py` to run app
+6. Run `python3.11 .\servers\online.py` to run communication server for notes (if you are using offline AI-server, then type `python3.11 .\servers\local.py` instead)
+7. Now you can successfully use IO-recorder in your Chrome browser

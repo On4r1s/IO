@@ -1,3 +1,4 @@
+import json
 import wave
 from datetime import datetime
 from vosk import Model, KaldiRecognizer, SetLogLevel
@@ -19,9 +20,7 @@ def transcribe_audio(file, stamp, lang, photos):
     text_segments = []
     full_text = ""
     prev_stamp = start_stamp
-
     for ts in timestamps:
-
         if ts:
             frame_count = int((ts - prev_stamp).total_seconds() * wf.getframerate())
         else:
@@ -32,19 +31,17 @@ def transcribe_audio(file, stamp, lang, photos):
             break
 
         if rec.AcceptWaveform(data):
-            result = eval(rec.Result())["text"]
+            result = json.loads(rec.Result())["text"]
         else:
-            result = eval(rec.PartialResult()).get("partial", "")
+            result = json.loads(rec.PartialResult())["partial"]
 
-        new_text = result[len(full_text):] if result.startswith(full_text) else result
-        if new_text.strip():
-            text_segments.append(new_text)
-            full_text = result
-
-    final_text = eval(rec.FinalResult()).get("text", "").strip()
-    new_text = final_text[len(full_text):] if final_text.startswith(full_text) else final_text
-    if new_text.strip():
+        new_text = result[len(full_text):]
         text_segments.append(new_text)
+        full_text = result
+
+    final_text = json.loads(rec.FinalResult())["text"]
+    new_text = final_text[len(full_text):]
+    text_segments.append(new_text)
 
     cleaned_text = [" ".join(text.splitlines()).strip() for text in text_segments]
 
